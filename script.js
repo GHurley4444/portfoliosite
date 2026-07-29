@@ -91,6 +91,16 @@ function scrambleText(el, finalText) {
   requestAnimationFrame(frame);
 }
 
+// ===================== Scramble on load (above-the-fold text) =====================
+// [data-scramble] pieces inside a .reveal element are handled by the
+// IntersectionObserver in setupReveal(); anything marked [data-scramble-load]
+// is above the fold and just decodes in once, right after the boot overlay.
+function setupScrambleOnLoad() {
+  document.querySelectorAll('[data-scramble-load]').forEach((el) => {
+    scrambleText(el, el.textContent.trim());
+  });
+}
+
 // ===================== Custom cursor =====================
 // Skipped on touch devices — there's no pointer to reticle-ify.
 function setupCustomCursor() {
@@ -224,6 +234,14 @@ function setupReveal() {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add('in-view');
+
+        // Any [data-scramble] text inside (or on) this element decodes in
+        // via the same scramble-reveal used by the prescript demo.
+        const scrambleTargets = entry.target.hasAttribute('data-scramble')
+          ? [entry.target, ...entry.target.querySelectorAll('[data-scramble]')]
+          : [...entry.target.querySelectorAll('[data-scramble]')];
+        scrambleTargets.forEach((el) => scrambleText(el, el.textContent.trim()));
+
         observer.unobserve(entry.target);
       }
     });
@@ -520,6 +538,7 @@ function setupFooterYear() {
 document.addEventListener('DOMContentLoaded', () => {
   runBootSequence();
   setupTypewriter();
+  setupScrambleOnLoad();
   setupHeaderScroll();
   setupScrollSpy();
   setupReveal();
