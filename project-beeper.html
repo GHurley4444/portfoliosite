@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beeper // Garrett Hurley</title>
+<meta name="description" content="Beeper — a handheld device inspired by Rein's Beeper and The Index (Limbus Company, Library of Ruina), recreated as real ESP32 hardware.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo">GH<span class="logo-dot">_</span><span class="logo-sub">SYS</span></a>
+    <nav class="main-nav">
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-banner">
+    <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // BEEPER</p>
+    <h1 class="page-title">Beeper</h1>
+    <p class="page-desc">A handheld device inspired by Rein's Beeper and The Index from the Project Moon universe (Limbus Company, Library of Ruina) — recreated as real, hand-wired hardware.</p>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+
+      <a href="projects.html" class="back-link">&larr; ALL PROJECTS</a>
+
+      <div class="case-section accent-magenta">
+        <h2>Inspiration &amp; Concept</h2>
+        <div class="case-grid">
+          <div class="project-visual" aria-hidden="true">
+            <div class="device">
+              <div class="device-notch"></div>
+              <div class="device-screen">
+                <div class="device-screen-header">
+                  <span class="dot"></span> BEEPER<span class="blink">_</span>
+                </div>
+                <div class="device-menu">
+                  <div class="device-menu-item active">GAME</div>
+                  <div class="device-menu-item">CITY</div>
+                  <div class="device-menu-item">CON</div>
+                  <div class="device-menu-item">TASK</div>
+                  <div class="device-menu-item">TIMED</div>
+                </div>
+                <div class="device-status">WIFI &middot; SCAN &middot; BLE &middot; QR</div>
+              </div>
+              <div class="device-speaker-grille">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p>Beeper is built on two references from the Project Moon universe: Rein's Beeper from Limbus Company, and The Index from Library of Ruina. The physical device recreates the former; its core behavior recreates the latter — in the source material, The Index hands out a single type of prescript. This build expands that into five parallel categories (GAME, CITY, CON, TASK, and a TIMED variant), each with its own difficulty pools and history — a personal design layer on top of the reference, not a lore-accurate recreation.</p>
+            <p>Everything past that core loop &mdash; the lyrics viewer, tarot, oracle, cipher wheel, and the WiFi/BLE/BT recon tools &mdash; is additional: some built purely for fun, some as practical cyber tools, sitting alongside the main task-issuing function rather than part of it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-section accent-cyan">
+        <h2>What It Does</h2>
+        <p>Runs on a "Cheap Yellow Display" ESP32 board (ESP32-2432S028R) with a TFT_eSPI display and XPT2046 resistive touchscreen. The firmware is fully custom — its own menu architecture, screen state machine, and persistence layer, with no off-the-shelf app framework underneath.</p>
+
+        <div class="feature-grid">
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Prescript Task Engine</h3>
+            <p>Five themed menus (GAME, CITY, CON, TASK, TIMED) each issue prompts to complete, with Easy/Normal/Hard/Rare difficulty tiers, no-repeat shuffled decks, streak tracking, and persistent run history.</p>
+          </div>
+          <div class="feature-card accent-magenta">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Passive Recon Tools</h3>
+            <p>Read-only WiFi scanner (sorted by RSSI), BLE scanner with AirTag/Tile tracker detection via manufacturer-data pattern matching, and a Bluetooth Classic scanner. No association, pairing, or injection.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9635;</span>
+            <h3>From-Scratch QR Engine</h3>
+            <p>A QR v1 (ECC-L) encoder built without an external library, complete with its own Reed-Solomon GF(256) tables, rendered straight to the touchscreen.</p>
+          </div>
+          <div class="feature-card accent-green">
+            <span class="feature-icon">&#9834;</span>
+            <h3>Lyrics Viewer</h3>
+            <p>An original song catalogue with per-song visual effects (particles, glitch, waves, fire) driven by a scramble-reveal text renderer shared with the main task screens.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9679;</span>
+            <h3>Side Tools</h3>
+            <p>Coin flip, tarot draw (22 Major Arcana with its own persisted shuffle deck), an 8-ball oracle, countdown timer, word generator, and a Caesar cipher wheel.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9889;</span>
+            <h3>Hand-Wired Hardware</h3>
+            <p>A 3000mAh LiPo through a load-sharing charge/boost circuit, a Class-D amp driving small speakers through an RC filter, breadboard-prototyped end to end.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-section accent-amber">
+        <h2>Hardware Build</h2>
+        <p>The CYD board has no native battery input, so power had to be solved separately from the display/logic board itself.</p>
+        <ul class="spec-list">
+          <li><strong>BATTERY</strong>3.7V 3000mAh LiPo cell, JST 1.25mm connector.</li>
+          <li><strong>CHARGE / BOOST</strong>Load-sharing charger/booster so the battery can charge and power the board simultaneously off USB — the CYD's own regulator can't do this alone.</li>
+          <li><strong>AUDIO</strong>Class-D amplifier into small 8-ohm speakers, with an RC filter added to clean up output on a free GPIO.</li>
+          <li><strong>PROTOTYPING</strong>Entirely breadboard-wired before any permanent assembly, with connector-pitch mismatches (1.25mm vs 2.0mm JST) solved via re-terminated leads.</li>
+        </ul>
+      </div>
+
+      <div class="case-section accent-green">
+        <h2>Tech Stack</h2>
+        <div class="tech-tags">
+          <span>C++ / Arduino</span>
+          <span>ESP32-2432S028R</span>
+          <span>TFT_eSPI</span>
+          <span>XPT2046 Touch</span>
+          <span>WiFi / BLE APIs</span>
+          <span>Embedded Systems</span>
+          <span>Circuit Design</span>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
+          <a href="https://github.com/GHurley4444/beeper" target="_blank" rel="noopener" class="btn btn-primary">VIEW REPO</a>
+          <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

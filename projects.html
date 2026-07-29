@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects // Garrett Hurley</title>
+<meta name="description" content="Projects by Garrett Hurley — hands-on cybersecurity and embedded systems builds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo">GH<span class="logo-dot">_</span><span class="logo-sub">SYS</span></a>
+    <nav class="main-nav">
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-banner">
+    <p class="breadcrumb"><a href="index.html">HOME</a> // PROJECTS</p>
+    <h1 class="page-title">Project Index</h1>
+    <p class="page-desc">Hands-on builds spanning embedded hardware, security tooling, and infrastructure. Each entry links to a full write-up.</p>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+      <div class="gallery-grid reveal">
+
+        <a href="project-beeper.html" class="gallery-card accent-magenta">
+          <span class="gallery-card-tag">// EMBEDDED &middot; RECON</span>
+          <h3>Beeper</h3>
+          <p>A handheld device inspired by Rein's Beeper and The Index (Limbus Company, Library of Ruina), recreated as real ESP32 hardware — task engine, recon tools, and hand-wired power/audio.</p>
+          <span class="gallery-card-cta">VIEW CASE STUDY &rarr;</span>
+        </a>
+
+        <div class="gallery-card accent-amber" style="opacity:0.55; cursor:default;">
+          <span class="gallery-card-tag">// NEXT MODULE</span>
+          <h3>Home Lab</h3>
+          <p>A dedicated lab environment for security testing and systems administration practice — write-up in progress.</p>
+          <span class="gallery-card-cta">COMING SOON</span>
+        </div>
+
+        <div class="gallery-card accent-green" style="opacity:0.55; cursor:default;">
+          <span class="gallery-card-tag">// QUEUED</span>
+          <h3>More projects loading</h3>
+          <p>This list grows as new builds get documented. Check back soon.</p>
+          <span class="gallery-card-cta">&mdash;</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

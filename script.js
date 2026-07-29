@@ -172,6 +172,24 @@ async function setupGithubStats() {
   }
 }
 
+// ===================== Active nav by current page =====================
+// Scroll-spy only fires on index.html (the only page with matching section ids).
+// On other pages, mark the nav link for the current page active instead.
+function setActiveNavByPage() {
+  const path = window.location.pathname.split('/').pop() || 'index.html';
+  const navLinks = document.querySelectorAll('.main-nav a');
+  if (!navLinks.length) return;
+
+  let key = null;
+  if (path.startsWith('project-') || path === 'projects.html') key = 'projects';
+
+  if (key) {
+    navLinks.forEach((l) => l.classList.remove('active'));
+    const link = document.querySelector(`.main-nav a[data-nav="${key}"]`);
+    if (link) link.classList.add('active');
+  }
+}
+
 // ===================== Footer year =====================
 function setupFooterYear() {
   const el = document.getElementById('year');
@@ -188,5 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMobileNav();
   setupPlaceholderLinks();
   setupGithubStats();
+  setActiveNavByPage();
   setupFooterYear();
 });

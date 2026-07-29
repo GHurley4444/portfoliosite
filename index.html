@@ -22,12 +22,12 @@
 
 <header class="site-header" id="siteHeader">
   <div class="header-inner">
-    <a href="#top" class="logo">GH<span class="logo-dot">_</span><span class="logo-sub">SYS</span></a>
+    <a href="index.html" class="logo">GH<span class="logo-dot">_</span><span class="logo-sub">SYS</span></a>
     <nav class="main-nav">
-      <a href="#about" data-nav="about">ABOUT</a>
-      <a href="#projects" data-nav="projects">PROJECTS</a>
-      <a href="#skills" data-nav="skills">SKILLS</a>
-      <a href="#contact" data-nav="contact">CONTACT</a>
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
     </nav>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
       <span></span><span></span><span></span>
@@ -46,11 +46,11 @@
       <p class="hero-subtitle">CYBERSECURITY &mdash; SECURITY OPERATIONS &middot; PENETRATION TESTING &middot; SYSTEMS ADMINISTRATION</p>
       <p class="hero-desc">I build, break, and defend systems — from SOC-style triage to hands-on penetration testing to embedded hardware built from bare components. This site tracks the projects along the way, starting with <strong>Beeper</strong>, a handheld recon device built from scratch.</p>
       <div class="hero-actions">
-        <a href="#projects" class="btn btn-primary">VIEW PROJECTS</a>
-        <a href="#contact" class="btn btn-ghost">CONTACT</a>
+        <a href="projects.html" class="btn btn-primary">VIEW PROJECTS</a>
+        <a href="index.html#contact" class="btn btn-ghost">CONTACT</a>
       </div>
     </div>
-    <a href="#about" class="scroll-cue" aria-label="Scroll down">
+    <a href="index.html#about" class="scroll-cue" aria-label="Scroll down">
       <span class="scroll-cue-line"></span>
       SCROLL
     </a>
@@ -63,18 +63,18 @@
       <div class="about-grid">
         <div class="about-copy reveal">
           <p>I'm working toward roles across security operations, penetration testing, and systems administration — the kind of background that comes from understanding a system well enough to both administer it and find where it breaks.</p>
-          <p>Outside of formal work, I build hands-on projects to keep that understanding sharp: writing firmware, wiring up circuits, and building tools that do real reconnaissance rather than just simulate it. <strong>Beeper</strong>, below, is the first of those projects documented here — more are on the way.</p>
+          <p>Outside of formal work, I build hands-on projects to keep that understanding sharp: writing firmware, wiring up circuits, and building tools that do real reconnaissance rather than just simulate it. <a href="projects.html">See the full project list &rarr;</a></p>
         </div>
         <div class="about-stats reveal">
-          <div class="stat-block">
+          <div class="stat-block accent-cyan">
             <span class="stat-label">FOCUS</span>
             <span class="stat-value">SOC &middot; Pentest &middot; SysAdmin</span>
           </div>
-          <div class="stat-block">
+          <div class="stat-block accent-magenta">
             <span class="stat-label">CERT (IN PROGRESS)</span>
             <span class="stat-value">CompTIA Network+</span>
           </div>
-          <div class="stat-block">
+          <div class="stat-block accent-amber">
             <span class="stat-label">CURRENT BUILD</span>
             <span class="stat-value">ESP32 handheld recon device</span>
           </div>
@@ -83,13 +83,13 @@
     </div>
   </section>
 
-  <section class="section section-alt" id="projects">
+  <section class="section section-alt accent-magenta" id="featured">
     <div class="section-inner">
       <p class="section-kicker">// 02 &nbsp;FEATURED PROJECT</p>
       <h2 class="section-title reveal">Beeper</h2>
-      <p class="section-lede reveal">A handheld device inspired by Rein's Beeper and The Index from the Project Moon universe (Limbus Company, Library of Ruina) — recreated as real hardware, built from a bare ESP32 dev board up.</p>
+      <p class="section-lede reveal">A handheld device inspired by Rein's Beeper and The Index from the Project Moon universe (Limbus Company, Library of Ruina) — recreated as real hardware.</p>
 
-      <div class="project-card reveal">
+      <a href="project-beeper.html" class="project-card reveal">
         <div class="project-visual" aria-hidden="true">
           <div class="device">
             <div class="device-notch"></div>
@@ -113,55 +113,26 @@
         </div>
 
         <div class="project-body">
-          <p>Beeper's main function mirrors The Index: it issues tasks and prompts to complete. Alongside that are side functions built purely for fun (tarot, oracle, a lyrics viewer) and practical cyber tools (WiFi/BLE/BT recon, QR generation).</p>
-
-          <p>It runs on a "Cheap Yellow Display" ESP32 board (ESP32-2432S028R) with a TFT_eSPI display and XPT2046 resistive touchscreen. The firmware is a fully custom, touchscreen-driven system with its own menu architecture, screen state machine, and persistence layer &mdash; no off-the-shelf app framework.</p>
-
-          <div class="feature-grid">
-            <div class="feature-card">
-              <span class="feature-icon">&#9673;</span>
-              <h3>Passive Recon Tools</h3>
-              <p>Read-only WiFi scanner, BLE scanner with AirTag/Tile tracker detection, and a Bluetooth Classic scanner. No injection or pairing — observation only.</p>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">&#9635;</span>
-              <h3>From-Scratch QR Engine</h3>
-              <p>A QR code generator and renderer built without an external library, driven straight from the touchscreen UI.</p>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">&#9673;</span>
-              <h3>Prescript Task Engine</h3>
-              <p>A touchscreen task system modeled on The Index — GAME, CITY, CON, TASK, and TIMED menus each issue prompts to complete, with Easy/Normal/Hard/Rare difficulty tiers, streaks, and run history.</p>
-            </div>
-            <div class="feature-card">
-              <span class="feature-icon">&#9889;</span>
-              <h3>Hand-Wired Hardware</h3>
-              <p>3000mAh LiPo battery through a load-sharing charge/boost circuit, a Class-D amp driving small speakers via an RC filter, breadboard-prototyped end to end.</p>
-            </div>
-          </div>
+          <p>Its main function mirrors The Index: issuing tasks and prompts to complete across five themed menus, each with its own difficulty tiers and history. Alongside that are side functions built purely for fun, and a set of practical cyber recon tools.</p>
 
           <div class="tech-tags">
             <span>C++ / Arduino</span>
             <span>ESP32</span>
             <span>TFT_eSPI</span>
-            <span>XPT2046 Touch</span>
             <span>WiFi / BLE APIs</span>
             <span>Embedded Systems</span>
-            <span>Circuit Design</span>
           </div>
 
-          <div class="project-links">
-            <a href="https://github.com/GHurley4444/beeper" target="_blank" rel="noopener" class="btn btn-ghost">VIEW REPO</a>
-          </div>
+          <div class="gallery-card-cta">VIEW FULL CASE STUDY &rarr;</div>
         </div>
-      </div>
+      </a>
 
       <div class="more-projects reveal">
-        <div class="ghost-card">
+        <div class="ghost-card accent-amber">
           <span class="ghost-tag">// NEXT MODULE</span>
           <p>Home lab build-out</p>
         </div>
-        <div class="ghost-card">
+        <div class="ghost-card accent-green">
           <span class="ghost-tag">// QUEUED</span>
           <p>More projects loading soon</p>
         </div>
@@ -174,19 +145,19 @@
       <p class="section-kicker">// 03 &nbsp;SKILLS</p>
       <h2 class="section-title reveal">Capabilities</h2>
       <div class="skills-grid">
-        <div class="skill-block reveal">
+        <div class="skill-block accent-cyan reveal">
           <h3>Security Operations</h3>
           <div class="tech-tags"><span>SOC Triage</span><span>IOC Analysis</span><span>NIST CSF</span><span>CVSS</span></div>
         </div>
-        <div class="skill-block reveal">
+        <div class="skill-block accent-magenta reveal">
           <h3>Offensive Security</h3>
           <div class="tech-tags"><span>Penetration Testing</span><span>Red Teaming</span><span>OWASP</span></div>
         </div>
-        <div class="skill-block reveal">
+        <div class="skill-block accent-amber reveal">
           <h3>Systems Administration</h3>
           <div class="tech-tags"><span>Help Desk / Service Desk</span><span>Active Directory / GPO</span></div>
         </div>
-        <div class="skill-block reveal">
+        <div class="skill-block accent-green reveal">
           <h3>Embedded &amp; Hardware</h3>
           <div class="tech-tags"><span>ESP32 / Arduino</span><span>Circuit Design</span><span>Firmware (C++)</span></div>
         </div>
@@ -194,23 +165,23 @@
     </div>
   </section>
 
-  <section class="section" id="activity">
+  <section class="section accent-green" id="activity">
     <div class="section-inner">
       <p class="section-kicker">// 03B &nbsp;LIVE ACTIVITY</p>
       <h2 class="section-title reveal">GitHub Signal</h2>
       <p class="section-lede reveal">Pulled live from the public GitHub API &mdash; no cached data.</p>
       <div class="github-panel reveal">
         <div class="github-stats" id="githubStats">
-          <div class="stat-block"><span class="stat-label">PUBLIC REPOS</span><span class="stat-value" id="ghRepos">&mdash;</span></div>
-          <div class="stat-block"><span class="stat-label">FOLLOWERS</span><span class="stat-value" id="ghFollowers">&mdash;</span></div>
-          <div class="stat-block"><span class="stat-label">LAST UPDATED REPO</span><span class="stat-value" id="ghLastRepo">&mdash;</span></div>
+          <div class="stat-block accent-green"><span class="stat-label">PUBLIC REPOS</span><span class="stat-value" id="ghRepos">&mdash;</span></div>
+          <div class="stat-block accent-cyan"><span class="stat-label">FOLLOWERS</span><span class="stat-value" id="ghFollowers">&mdash;</span></div>
+          <div class="stat-block accent-magenta"><span class="stat-label">LAST UPDATED REPO</span><span class="stat-value" id="ghLastRepo">&mdash;</span></div>
         </div>
         <img class="github-chart" src="https://ghchart.rshah.org/37f4ff/GHurley4444" alt="Garrett Hurley's GitHub contribution chart" loading="lazy">
       </div>
     </div>
   </section>
 
-  <section class="section section-alt" id="contact">
+  <section class="section section-alt accent-violet" id="contact">
     <div class="section-inner">
       <p class="section-kicker">// 04 &nbsp;CONTACT</p>
       <h2 class="section-title reveal">Get in touch</h2>
