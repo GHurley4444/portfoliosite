@@ -228,10 +228,15 @@ function setupOrbitBackground() {
   document.body.prepend(wrap);
 }
 
-// ===================== Light-cycle grid background =====================
-// Top-down grid runners that move in straight lines, turn at right angles,
-// and leave a fading light trail behind them — respawn from a random edge
-// whenever they run off the viewport. Canvas-based for cheap per-frame draws.
+// ===================== Light-cycle grid battle =====================
+// A real grid-battle simulation, not just decorative trails: each runner
+// leaves a solid wall behind it that persists for the whole round. Runners
+// die on hitting a wall (their own, an opponent's, or the arena boundary)
+// or on a head-on collision with another runner. Last one standing (or a
+// mutual wipeout) ends the round; the board clears and a new one begins.
+// A short lookahead keeps runners from suiciding into the very next cell,
+// which is enough to produce real dodging/cornering behavior without a
+// full pathfinding AI.
 function setupLightCycles() {
   if (document.querySelector('.lightcycle-bg')) return;
 
@@ -242,29 +247,41 @@ function setupLightCycles() {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const CELL = 26;
-  const TICK_MS = 90;
-  const MAX_TRAIL = 160;
-  const TURN_CHANCE = 0.045;
-  const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff', '#37f4ff'];
+  const CELL = 22;
+  const TICK_MS = 95;
+  const TURN_CHANCE = 0.05;
+  const ROUND_PAUSE_MS = 1600;
+  const MAX_ROUND_TICKS = 500; // safety net so a round can't stall forever
+  const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
   const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   const TURNS = { up: ['left', 'right'], down: ['left', 'right'], left: ['up', 'down'], right: ['up', 'down'] };
 
   let cols = 0;
   let rows = 0;
-  let cycles = [];
+  let grid = [];
+  let bots = [];
+  let effects = [];
+  let roundTicks = 0;
+  let paused = false;
   let dpr = Math.max(window.devicePixelRatio || 1, 1);
   let tickHandle = null;
+  let resizeHandle = null;
 
-  function spawnCycle(color) {
-    const edge = Math.floor(Math.random() * 4);
-    let x, y, dir;
-    if (edge === 0) { x = Math.floor(Math.random() * cols); y = 0; dir = 'down'; }
-    else if (edge === 1) { x = cols - 1; y = Math.floor(Math.random() * rows); dir = 'left'; }
-    else if (edge === 2) { x = Math.floor(Math.random() * cols); y = rows - 1; dir = 'up'; }
-    else { x = 0; y = Math.floor(Math.random() * rows); dir = 'right'; }
-    return { x, y, dir, color, trail: [{ x, y }] };
+  const inBounds = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
+  const isFree = (x, y) => inBounds(x, y) && !grid[y][x];
+
+  function makeGrid() {
+    grid = Array.from({ length: rows }, () => new Array(cols).fill(0));
+  }
+
+  function spawnBot(id, color) {
+    // Start somewhere with breathing room, not jammed against an edge.
+    const margin = 4;
+    const x = margin + Math.floor(Math.random() * Math.max(cols - margin * 2, 1));
+    const y = margin + Math.floor(Math.random() * Math.max(rows - margin * 2, 1));
+    const dir = Object.keys(DIRS)[Math.floor(Math.random() * 4)];
+    return { id, color, x, y, dir, alive: true, trail: [{ x, y }] };
   }
 
   function resize() {
@@ -278,67 +295,162 @@ function setupLightCycles() {
     rows = Math.ceil(window.innerHeight / CELL);
   }
 
+  function startRound() {
+    makeGrid();
+    effects = [];
+    roundTicks = 0;
+    paused = false;
+    bots = COLORS.map((color, i) => spawnBot(i, color));
+    bots.forEach((b) => { grid[b.y][b.x] = b.id + 1; });
+    draw();
+  }
+
   function reset() {
     resize();
-    cycles = COLORS.map(spawnCycle);
-    draw();
+    startRound();
+  }
+
+  // 1-cell lookahead: prefer straight, but dodge if the next cell is a wall.
+  function chooseDirection(bot) {
+    let dir = bot.dir;
+    const ahead = DIRS[dir];
+    const forwardBlocked = !isFree(bot.x + ahead.x, bot.y + ahead.y);
+
+    if (forwardBlocked || Math.random() < TURN_CHANCE) {
+      const options = [...TURNS[dir]];
+      // Shuffle so left/right bias isn't fixed.
+      if (Math.random() < 0.5) options.reverse();
+      for (const opt of options) {
+        const d = DIRS[opt];
+        if (isFree(bot.x + d.x, bot.y + d.y)) { dir = opt; break; }
+      }
+      // If neither side is free either, keep going straight and let it crash —
+      // a cornered runner dying is authentic, not a bug.
+    }
+    return dir;
+  }
+
+  function triggerCrash(x, y, color) {
+    effects.push({ x, y, color, start: performance.now() });
   }
 
   function tick() {
-    cycles.forEach((c) => {
-      if (Math.random() < TURN_CHANCE) {
-        const opts = TURNS[c.dir];
-        c.dir = opts[Math.floor(Math.random() * opts.length)];
-      }
-      const d = DIRS[c.dir];
-      c.x += d.x;
-      c.y += d.y;
+    if (paused) return;
+    roundTicks++;
 
-      if (c.x < 0 || c.x >= cols || c.y < 0 || c.y >= rows) {
-        Object.assign(c, spawnCycle(c.color));
+    const alive = bots.filter((b) => b.alive);
+    if (alive.length <= 1 || roundTicks > MAX_ROUND_TICKS) {
+      const winner = alive[0];
+      if (winner) triggerCrash(winner.x, winner.y, winner.color); // small flourish, not a death
+      paused = true;
+      draw();
+      setTimeout(startRound, ROUND_PAUSE_MS);
+      return;
+    }
+
+    // Decide moves from current grid state, then resolve all at once so
+    // order doesn't matter and simultaneous head-ons are caught correctly.
+    const moves = alive.map((b) => {
+      const dir = chooseDirection(b);
+      const d = DIRS[dir];
+      return { bot: b, dir, nx: b.x + d.x, ny: b.y + d.y };
+    });
+
+    moves.forEach((m) => {
+      const dead =
+        !inBounds(m.nx, m.ny) ||
+        grid[m.ny] && grid[m.ny][m.nx] ||
+        moves.some((other) => other !== m && other.nx === m.nx && other.ny === m.ny);
+
+      if (dead) {
+        m.bot.alive = false;
+        triggerCrash(m.bot.x, m.bot.y, m.bot.color);
         return;
       }
 
-      c.trail.push({ x: c.x, y: c.y });
-      if (c.trail.length > MAX_TRAIL) c.trail.shift();
+      m.bot.dir = m.dir;
+      m.bot.x = m.nx;
+      m.bot.y = m.ny;
+      m.bot.trail.push({ x: m.nx, y: m.ny });
+      grid[m.ny][m.nx] = m.bot.id + 1;
     });
+
     draw();
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    cycles.forEach((c) => {
-      for (let i = 1; i < c.trail.length; i++) {
-        const alpha = (i / c.trail.length) * 0.5;
-        ctx.strokeStyle = c.color;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(c.trail[i - 1].x * CELL + CELL / 2, c.trail[i - 1].y * CELL + CELL / 2);
-        ctx.lineTo(c.trail[i].x * CELL + CELL / 2, c.trail[i].y * CELL + CELL / 2);
-        ctx.stroke();
-      }
-      const head = c.trail[c.trail.length - 1];
-      if (head) {
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = c.color;
-        ctx.shadowColor = c.color;
-        ctx.shadowBlur = 8;
-        ctx.fillRect(head.x * CELL + CELL / 2 - 3, head.y * CELL + CELL / 2 - 3, 6, 6);
-        ctx.shadowBlur = 0;
-      }
+  function drawTrail(bot) {
+    const trail = bot.trail;
+    ctx.strokeStyle = bot.color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'square';
+    for (let i = 1; i < trail.length; i++) {
+      const age = trail.length - i;
+      ctx.globalAlpha = age < 12 ? 1 : 0.55;
+      ctx.beginPath();
+      ctx.moveTo(trail[i - 1].x * CELL + CELL / 2, trail[i - 1].y * CELL + CELL / 2);
+      ctx.lineTo(trail[i].x * CELL + CELL / 2, trail[i].y * CELL + CELL / 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHead(bot) {
+    if (!bot.alive) return;
+    const cx = bot.x * CELL + CELL / 2;
+    const cy = bot.y * CELL + CELL / 2;
+    const horizontal = bot.dir === 'left' || bot.dir === 'right';
+    const w = horizontal ? CELL * 0.55 : CELL * 0.32;
+    const h = horizontal ? CELL * 0.32 : CELL * 0.55;
+    ctx.fillStyle = bot.color;
+    ctx.shadowColor = bot.color;
+    ctx.shadowBlur = 10;
+    ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+    ctx.shadowBlur = 0;
+  }
+
+  function drawEffects(now) {
+    const DURATION = 550;
+    effects = effects.filter((fx) => now - fx.start < DURATION);
+    effects.forEach((fx) => {
+      const t = (now - fx.start) / DURATION;
+      const cx = fx.x * CELL + CELL / 2;
+      const cy = fx.y * CELL + CELL / 2;
+      ctx.globalAlpha = 1 - t;
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4 + t * CELL * 1.8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = (1 - t) * 0.6;
+      ctx.fillStyle = fx.color;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.max(6 - t * 6, 0), 0, Math.PI * 2);
+      ctx.fill();
     });
     ctx.globalAlpha = 1;
   }
 
+  function draw() {
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    bots.forEach(drawTrail);
+    bots.forEach(drawHead);
+    drawEffects(performance.now());
+  }
+
   window.addEventListener('resize', () => {
-    reset();
+    clearTimeout(resizeHandle);
+    resizeHandle = setTimeout(reset, 200);
   });
 
   reset();
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   tickHandle = setInterval(tick, TICK_MS);
+  // Keep crash-effect fade-outs animating smoothly between grid ticks.
+  (function raf() {
+    if (effects.length) draw();
+    requestAnimationFrame(raf);
+  })();
 }
 
 // ===================== Header scroll state =====================
