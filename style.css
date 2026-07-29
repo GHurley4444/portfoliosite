@@ -481,8 +481,8 @@ a.project-card:hover {
 .project-visual { display: flex; align-items: center; justify-content: center; }
 
 .device {
-  width: 260px;
-  aspect-ratio: 3 / 4.6;
+  width: 300px;
+  aspect-ratio: 4 / 3;
   background: linear-gradient(160deg, #0b1622, #060d16);
   border: 1px solid rgba(55, 244, 255, 0.3);
   border-radius: 22px;
@@ -513,63 +513,84 @@ a.project-card:hover {
   box-shadow: inset 0 0 24px rgba(55, 244, 255, 0.15);
 }
 
-.device-screen-header {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--cyan);
+/* Prescript screen — mirrors the real drawPrescript() layout from beeper.ino:
+   category label + difficulty badge (top), streak (below), a large centered
+   word-wrapped task string (middle), swipe hints to the prev/next category
+   carousel entry (bottom edges), and PASS/FAIL labels (bottom). */
+.prescript-header {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
   text-shadow: var(--glow-sm);
 }
 
-.device-screen-header .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 6px var(--cyan);
+.prescript-label {
+  color: var(--cyan);
+  font-weight: 700;
 }
 
-.blink { animation: blink 1s step-start infinite; }
-
-.device-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-
-.device-menu-item {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
-  border: 1px solid rgba(55, 244, 255, 0.15);
-  border-left: 3px solid var(--item-color, var(--cyan));
-  border-radius: 3px;
-  padding: 6px 10px;
-}
-
-.device-menu-item:nth-child(1) { --item-color: var(--cyan); }
-.device-menu-item:nth-child(2) { --item-color: var(--blue); }
-.device-menu-item:nth-child(3) { --item-color: var(--violet); }
-.device-menu-item:nth-child(4) { --item-color: var(--amber); }
-.device-menu-item:nth-child(5) { --item-color: var(--cyan); }
-
-.device-menu-item.active {
-  color: #001015;
-  background: var(--item-color, var(--cyan));
-  box-shadow: 0 0 10px var(--item-color, var(--cyan));
-  border-color: var(--item-color, var(--cyan));
-}
-
-.device-status {
-  font-family: var(--font-mono);
+.prescript-diff {
+  color: var(--cyan-soft);
   font-size: 0.6rem;
-  color: var(--text-dimmer);
+}
+
+.prescript-streak {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
   letter-spacing: 0.08em;
+  color: var(--text-dimmer);
+}
+
+.prescript-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-shadow: var(--glow-sm);
+}
+
+.prescript-swipe {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dimmer);
+}
+
+.prescript-actions {
+  display: flex;
+  justify-content: space-between;
   border-top: 1px solid rgba(55, 244, 255, 0.15);
   padding-top: 8px;
+}
+
+.prescript-actions span {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(55, 244, 255, 0.25);
+}
+
+.prescript-actions .pass {
+  color: var(--cyan-soft);
+  border-color: rgba(55, 244, 255, 0.35);
+}
+
+.prescript-actions .fail {
+  color: var(--amber-soft);
+  border-color: rgba(255, 184, 77, 0.35);
 }
 
 .device-speaker-grille {
