@@ -1032,6 +1032,20 @@ a.project-card:hover {
   align-items: start;
 }
 
+.case-grid-demo { grid-template-columns: 420px 1fr; }
+
+.device-demo {
+  width: 420px;
+  max-width: 100%;
+}
+
+.device-demo .prescript-header { font-size: 0.9rem; }
+.device-demo .prescript-diff { font-size: 0.78rem; }
+.device-demo .prescript-streak { font-size: 0.72rem; }
+.device-demo .prescript-text { font-size: 1.4rem; }
+.device-demo .prescript-swipe button { font-size: 0.7rem; }
+.device-demo .prescript-actions button { font-size: 0.85rem; padding: 6px 16px; }
+
 .back-link {
   display: inline-flex;
   align-items: center;
