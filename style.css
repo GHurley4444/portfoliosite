@@ -336,6 +336,110 @@ body.custom-cursor-active button {
   box-shadow: var(--glow-sm);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.bg-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan-soft);
+  background: rgba(55, 244, 255, 0.06);
+  border: 1px solid rgba(55, 244, 255, 0.3);
+  border-radius: 3px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+}
+
+.bg-toggle:hover { border-color: var(--cyan); box-shadow: var(--glow-sm); }
+
+.bg-toggle-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.bg-toggle[aria-pressed="false"] { color: var(--text-dimmer); border-color: rgba(255, 255, 255, 0.15); }
+.bg-toggle[aria-pressed="false"] .bg-toggle-dot { background: var(--text-dimmer); box-shadow: none; }
+.bg-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.secret-trigger {
+  background: none;
+  border: none;
+  color: rgba(55, 244, 255, 0.12);
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0 2px;
+  vertical-align: middle;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.secret-trigger:hover { color: var(--cyan); text-shadow: var(--glow-sm); }
+
+/* ===================== Secret game HUD ===================== */
+/* Small corner panel, not a full-screen takeover — the point is the game
+   plays out in the background layer while the page content (including the
+   resume info) stays fully visible and readable the whole time. */
+.game-hud {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  z-index: 50;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--cyan-soft);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  max-width: 220px;
+}
+
+.game-hud.visible { opacity: 1; }
+
+.game-hud-prompt {
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-shadow: var(--glow-sm);
+  animation: blink 1.2s step-start infinite;
+}
+
+.game-hud-countdown {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: 0 0 20px var(--cyan);
+}
+
+.game-hud-result {
+  font-size: 1.05rem;
+  letter-spacing: 0.1em;
+  color: var(--amber-soft);
+  text-shadow: 0 0 12px rgba(255, 184, 77, 0.5);
+}
+
+.game-hud-hint {
+  font-size: 0.6rem;
+  color: var(--text-dimmer);
+  letter-spacing: 0.1em;
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 720px) {
+  .header-actions { gap: 0.5rem; }
+  .bg-toggle span:not(.bg-toggle-dot) { display: none; }
+  .bg-toggle { padding: 0.45rem 0.5rem; }
+}
+
 /* ===================== Hero ===================== */
 .hero {
   position: relative;

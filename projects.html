@@ -25,9 +25,14 @@
       <a href="index.html#skills" data-nav="skills">SKILLS</a>
       <a href="index.html#contact" data-nav="contact">CONTACT</a>
     </nav>
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="header-actions">
+      <button class="bg-toggle" id="bgToggle" type="button" aria-pressed="true" aria-label="Toggle Tron background">
+        <span class="bg-toggle-dot"></span>TRON
+      </button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -71,7 +76,7 @@
 </main>
 
 <footer class="site-footer">
-  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy.</p>
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy. <button class="secret-trigger" id="secretTrigger" type="button" aria-label="???">&#9673;</button></p>
 </footer>
 
 <script src="script.js"></script>

@@ -192,16 +192,18 @@ function setupMagneticButtons() {
   });
 }
 
-// ===================== Rotating orbit background (pocketed) =====================
-// Not currently used — swapped out for the light-cycle grid background below,
-// but left intact (function + matching CSS in style.css) in case it comes
-// back later. Not called from the init block at the bottom of this file.
-// Injected once via JS rather than duplicated across all three HTML files.
-// Concentric rings turning at different speeds (some clockwise, some not)
-// plus a fast radar-style sweep, sitting behind all page content.
-function setupOrbitBackground() {
-  if (document.querySelector('.orbit-bg')) return;
+// ===================== Backgrounds: orbit + light-cycle grid battle =====================
+// Two selectable backgrounds, toggled from the header button:
+//  - the light-cycle grid battle (bots dueling on a grid, and the base for
+//    the secret playable game triggered from the footer)
+//  - the older rotating orbit/radar display
+// Both are built as small controller objects ({ show, hide, ... }) so they
+// can be freely swapped without re-creating DOM each time.
+let gridEngine = null;
+let orbitEngine = null;
+let activeBackground = null; // 'lightcycle' | 'orbit'
 
+function createOrbitBackground() {
   const wrap = document.createElement('div');
   wrap.className = 'orbit-bg';
   wrap.setAttribute('aria-hidden', 'true');
@@ -225,27 +227,25 @@ function setupOrbitBackground() {
       </g>
     </svg>
   `;
-  document.body.prepend(wrap);
+  return {
+    show() { if (!wrap.isConnected) document.body.prepend(wrap); },
+    hide() { if (wrap.isConnected) wrap.remove(); },
+  };
 }
 
-// ===================== Light-cycle grid battle =====================
 // A real grid-battle simulation, not just decorative trails: each runner
 // leaves a solid wall behind it that persists for the whole round. Runners
 // die on hitting a wall (their own, an opponent's, or the arena boundary)
 // or on a head-on collision with another runner. Last one standing (or a
 // mutual wipeout) ends the round; the board clears and a new one begins.
-// A short lookahead keeps runners from suiciding into the very next cell,
-// which is enough to produce real dodging/cornering behavior without a
-// full pathfinding AI.
-function setupLightCycles() {
-  if (document.querySelector('.lightcycle-bg')) return;
-
+// Also doubles as the secret playable game: one "bot" can be handed off to
+// keyboard control (see beginPrompt/beginCountdown below) without changing
+// any of the underlying simulation or collision logic.
+function createGridEngine() {
   const canvas = document.createElement('canvas');
   canvas.className = 'lightcycle-bg';
   canvas.setAttribute('aria-hidden', 'true');
-  document.body.prepend(canvas);
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
 
   const CELL = 22;
   const TICK_MS = 95;
@@ -256,10 +256,12 @@ function setupLightCycles() {
   const STRAIGHT_BONUS = 3; // small preference for not zig-zagging every tick
   const DANGER_SPACE_THRESHOLD = 22; // if even the roomiest option is this tight, it's real danger
   const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
+  const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
   const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   const TURNS = { up: ['left', 'right'], down: ['left', 'right'], left: ['up', 'down'], right: ['up', 'down'] };
+  const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
 
   let cols = 0;
   let rows = 0;
@@ -267,10 +269,18 @@ function setupLightCycles() {
   let bots = [];
   let effects = [];
   let roundTicks = 0;
-  let paused = false;
+  let running = false; // is the canvas mounted/active at all
+  let paused = false; // frozen between rounds, or during a prompt/countdown
   let dpr = Math.max(window.devicePixelRatio || 1, 1);
   let tickHandle = null;
+  let tickRunning = false;
+  let rafRunning = false;
   let resizeHandle = null;
+
+  let mode = 'ambient'; // 'ambient' | 'prompt' | 'countdown' | 'playing' | 'gameover'
+  let playerId = null;
+  let pendingDir = null;
+  let onHudUpdate = null;
 
   const inBounds = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
   const isFree = (x, y) => inBounds(x, y) && !grid[y][x];
@@ -279,17 +289,31 @@ function setupLightCycles() {
     grid = Array.from({ length: rows }, () => new Array(cols).fill(0));
   }
 
-  function spawnBot(id, color) {
+  function spawnBot(id, color, x, y, dir) {
+    // Per-bot aggression gives each one a slightly different personality —
+    // some chase harder, some play it a bit safer — instead of identical
+    // decision-makers.
+    const aggression = 1 + Math.random() * 0.8;
+    return { id, color, x, y, dir, alive: true, trail: [{ x, y }], aggression };
+  }
+
+  function randomSpawn(id, color) {
     // Start somewhere with breathing room, not jammed against an edge.
     const margin = 4;
     const x = margin + Math.floor(Math.random() * Math.max(cols - margin * 2, 1));
     const y = margin + Math.floor(Math.random() * Math.max(rows - margin * 2, 1));
     const dir = Object.keys(DIRS)[Math.floor(Math.random() * 4)];
-    // Per-bot aggression gives each one a slightly different personality —
-    // some chase harder, some play it a bit safer — instead of four
-    // identical decision-makers.
-    const aggression = 1 + Math.random() * 0.8;
-    return { id, color, x, y, dir, alive: true, trail: [{ x, y }], aggression };
+    return spawnBot(id, color, x, y, dir);
+  }
+
+  // The four starting points form a "+" around the arena center, each
+  // runner facing outward along its arm.
+  function crossSpawn(id, color, armDir) {
+    const cx = Math.floor(cols / 2);
+    const cy = Math.floor(rows / 2);
+    const arm = Math.max(Math.min(Math.floor(Math.min(cols, rows) / 2) - 3, 18), 6);
+    const d = DIRS[armDir];
+    return spawnBot(id, color, cx + d.x * arm, cy + d.y * arm, armDir);
   }
 
   function resize() {
@@ -303,19 +327,33 @@ function setupLightCycles() {
     rows = Math.ceil(window.innerHeight / CELL);
   }
 
-  function startRound() {
+  function startAmbientRound() {
     makeGrid();
     effects = [];
     roundTicks = 0;
     paused = false;
-    bots = COLORS.map((color, i) => spawnBot(i, color));
+    mode = 'ambient';
+    playerId = null;
+    bots = COLORS.map((color, i) => randomSpawn(i, color));
     bots.forEach((b) => { grid[b.y][b.x] = b.id + 1; });
+    draw();
+  }
+
+  function startCrossFormation() {
+    makeGrid();
+    effects = [];
+    roundTicks = 0;
+    const armDirs = ['up', 'down', 'left', 'right'];
+    bots = COLORS.map((color, i) => crossSpawn(i, color, armDirs[i]));
+    bots.forEach((b) => { grid[b.y][b.x] = b.id + 1; });
+    playerId = 0; // the "up" arm becomes the player-controlled runner
+    pendingDir = bots[0].dir;
     draw();
   }
 
   function reset() {
     resize();
-    startRound();
+    startAmbientRound();
   }
 
   // Bounded flood-fill from a candidate cell — how much open space does
@@ -345,7 +383,8 @@ function setupLightCycles() {
 
   // Aim a little ahead of the nearest opponent's current heading rather
   // than straight at them, so bots read as trying to cut a path off
-  // instead of just tailgating.
+  // instead of just tailgating. During the playable game, the player is
+  // just another entry in `alive`, so bots hunt it exactly the same way.
   function nearestTarget(bot, alive) {
     let best = null;
     let bestDist = Infinity;
@@ -382,14 +421,8 @@ function setupLightCycles() {
       })
       .filter(Boolean);
 
-    // Every option was blocked — the bot is well and truly cornered.
-    // Nothing left to choose; the crash that follows is a real outcome.
     if (!options.length) return bot.dir;
 
-    // Danger isn't "something nearby is close" (that's normal — the bot's
-    // own trail is always close behind it) — it's "even my best available
-    // option only opens onto a small pocket." When that's true, drop the
-    // chase and prioritize whichever option has the most room, full stop.
     const maxSpace = Math.max(...options.map((o) => o.space));
     const inDanger = maxSpace < DANGER_SPACE_THRESHOLD;
     const aggressionScale = inDanger ? ESCAPE_AGGRESSION_CUT : 1;
@@ -416,24 +449,35 @@ function setupLightCycles() {
     effects.push({ x, y, color, start: performance.now() });
   }
 
-  function tick() {
-    if (paused) return;
+  function resolveTick() {
     roundTicks++;
-
     const alive = bots.filter((b) => b.alive);
-    if (alive.length <= 1 || roundTicks > MAX_ROUND_TICKS) {
+
+    if (mode === 'playing') {
+      const player = bots.find((b) => b.id === playerId);
+      const playerAlive = player && player.alive;
+      const opponentsLeft = alive.filter((b) => b.id !== playerId).length;
+      if (!playerAlive) { endGame('lost'); return; }
+      if (opponentsLeft === 0) { endGame('won'); return; }
+      if (roundTicks > MAX_ROUND_TICKS) { endGame('won'); return; }
+    } else if (alive.length <= 1 || roundTicks > MAX_ROUND_TICKS) {
       const winner = alive[0];
       if (winner) triggerCrash(winner.x, winner.y, winner.color); // small flourish, not a death
       paused = true;
       draw();
-      setTimeout(startRound, ROUND_PAUSE_MS);
+      setTimeout(startAmbientRound, ROUND_PAUSE_MS);
       return;
     }
 
     // Decide moves from current grid state, then resolve all at once so
     // order doesn't matter and simultaneous head-ons are caught correctly.
     const moves = alive.map((b) => {
-      const dir = chooseDirection(b, alive);
+      let dir;
+      if (mode === 'playing' && b.id === playerId) {
+        dir = pendingDir && pendingDir !== OPPOSITE[b.dir] ? pendingDir : b.dir;
+      } else {
+        dir = chooseDirection(b, alive);
+      }
       const d = DIRS[dir];
       return { bot: b, dir, nx: b.x + d.x, ny: b.y + d.y };
     });
@@ -441,7 +485,7 @@ function setupLightCycles() {
     moves.forEach((m) => {
       const dead =
         !inBounds(m.nx, m.ny) ||
-        grid[m.ny] && grid[m.ny][m.nx] ||
+        (grid[m.ny] && grid[m.ny][m.nx]) ||
         moves.some((other) => other !== m && other.nx === m.nx && other.ny === m.ny);
 
       if (dead) {
@@ -458,6 +502,11 @@ function setupLightCycles() {
     });
 
     draw();
+  }
+
+  function tick() {
+    if (paused || !running) return;
+    resolveTick();
   }
 
   function drawTrail(bot) {
@@ -488,6 +537,16 @@ function setupLightCycles() {
     ctx.shadowBlur = 10;
     ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
     ctx.shadowBlur = 0;
+    if (bot.id === playerId) {
+      // A bright outline so the player's own runner is easy to pick out
+      // from the AI ones at a glance.
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.85;
+      ctx.strokeRect(cx - w / 2 - 3, cy - h / 2 - 3, w + 6, h + 6);
+      ctx.globalAlpha = 1;
+    }
   }
 
   function drawEffects(now) {
@@ -519,20 +578,233 @@ function setupLightCycles() {
     drawEffects(performance.now());
   }
 
+  function startTickLoop() {
+    if (tickRunning) return;
+    tickRunning = true;
+    clearInterval(tickHandle);
+    tickHandle = setInterval(tick, TICK_MS);
+  }
+
+  function stopTickLoop() {
+    tickRunning = false;
+    clearInterval(tickHandle);
+  }
+
+  function startRafLoop() {
+    if (rafRunning) return;
+    rafRunning = true;
+    (function raf() {
+      if (!running) { rafRunning = false; return; }
+      if (effects.length) draw();
+      requestAnimationFrame(raf);
+    })();
+  }
+
   window.addEventListener('resize', () => {
     clearTimeout(resizeHandle);
-    resizeHandle = setTimeout(reset, 200);
+    resizeHandle = setTimeout(() => { if (running) reset(); }, 200);
   });
 
-  reset();
+  // ---------- Public lifecycle ----------
+  function show() {
+    running = true;
+    if (!canvas.isConnected) document.body.prepend(canvas);
+    resize();
+    if (bots.length === 0) startAmbientRound();
+    else draw();
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      startTickLoop();
+      startRafLoop();
+    }
+  }
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  tickHandle = setInterval(tick, TICK_MS);
-  // Keep crash-effect fade-outs animating smoothly between grid ticks.
-  (function raf() {
-    if (effects.length) draw();
-    requestAnimationFrame(raf);
-  })();
+  function hide() {
+    running = false;
+    stopTickLoop();
+    if (mode !== 'ambient') { mode = 'ambient'; onHudUpdate = null; }
+    if (canvas.isConnected) canvas.remove();
+  }
+
+  // ---------- Secret-game control (used by setupSecretGame) ----------
+  function beginPrompt(onUpdate) {
+    onHudUpdate = onUpdate;
+    mode = 'prompt';
+    paused = true;
+    startCrossFormation();
+    draw();
+    if (!tickRunning) startTickLoop(); // gameplay needs ticking even under reduced-motion
+    onHudUpdate({ state: 'prompt' });
+  }
+
+  function beginCountdown() {
+    if (mode !== 'prompt') return;
+    mode = 'countdown';
+    let n = COUNTDOWN_SECONDS;
+    onHudUpdate && onHudUpdate({ state: 'countdown', value: n });
+    const step = () => {
+      n--;
+      if (n > 0) {
+        onHudUpdate && onHudUpdate({ state: 'countdown', value: n });
+        setTimeout(step, 1000);
+      } else {
+        beginPlaying();
+      }
+    };
+    setTimeout(step, 1000);
+  }
+
+  function beginPlaying() {
+    mode = 'playing';
+    roundTicks = 0;
+    paused = false;
+    onHudUpdate && onHudUpdate({ state: 'playing' });
+  }
+
+  function endGame(result) {
+    mode = 'gameover';
+    paused = true;
+    draw();
+    onHudUpdate && onHudUpdate({ state: 'gameover', result });
+    setTimeout(() => {
+      onHudUpdate = null;
+      startAmbientRound();
+    }, 2600);
+  }
+
+  function abortGame() {
+    onHudUpdate = null;
+    startAmbientRound();
+  }
+
+  function setPlayerDirection(dir) {
+    pendingDir = dir;
+  }
+
+  return {
+    show,
+    hide,
+    beginPrompt,
+    beginCountdown,
+    abortGame,
+    setPlayerDirection,
+    get mode() { return mode; },
+  };
+}
+
+function setupBackgroundToggle() {
+  const btn = document.getElementById('bgToggle');
+  if (!btn || !gridEngine || !orbitEngine) return;
+
+  function apply(next, persist) {
+    activeBackground = next;
+    if (next === 'lightcycle') {
+      orbitEngine.hide();
+      gridEngine.show();
+      btn.setAttribute('aria-pressed', 'true');
+    } else {
+      gridEngine.hide();
+      orbitEngine.show();
+      btn.setAttribute('aria-pressed', 'false');
+    }
+    if (persist) {
+      try { localStorage.setItem('bgMode', next); } catch (e) {}
+    }
+  }
+
+  let saved = null;
+  try { saved = localStorage.getItem('bgMode'); } catch (e) {}
+  apply(saved === 'orbit' ? 'orbit' : 'lightcycle', false);
+
+  btn.addEventListener('click', () => {
+    if (btn.disabled) return;
+    apply(activeBackground === 'lightcycle' ? 'orbit' : 'lightcycle', true);
+  });
+}
+
+// ===================== Secret playable light-cycle game =====================
+function setupSecretGame() {
+  const trigger = document.getElementById('secretTrigger');
+  if (!trigger || !gridEngine) return;
+
+  const bgToggleBtn = document.getElementById('bgToggle');
+  const hud = document.createElement('div');
+  hud.className = 'game-hud';
+  hud.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(hud);
+
+  let active = false;
+
+  function renderHud(state) {
+    if (state.state === 'prompt') {
+      hud.innerHTML = '<div class="game-hud-prompt">PRESS ANY BUTTON TO START</div>'
+        + '<div class="game-hud-hint">WASD TO MOVE &middot; ESC TO EXIT</div>';
+      hud.classList.add('visible');
+    } else if (state.state === 'countdown') {
+      hud.innerHTML = `<div class="game-hud-countdown">${state.value}</div>`;
+    } else if (state.state === 'playing') {
+      hud.innerHTML = '<div class="game-hud-hint">WASD TO MOVE &middot; ESC TO EXIT</div>';
+    } else if (state.state === 'gameover') {
+      const msg = state.result === 'won' ? 'YOU SURVIVED' : 'DERESOLVED';
+      hud.innerHTML = `<div class="game-hud-result">${msg}</div>`;
+      setTimeout(() => {
+        hud.classList.remove('visible');
+        active = false;
+        if (bgToggleBtn) bgToggleBtn.disabled = false;
+        window.removeEventListener('keydown', onKey);
+      }, 2200);
+    }
+  }
+
+  function exitGame() {
+    active = false;
+    if (bgToggleBtn) bgToggleBtn.disabled = false;
+    window.removeEventListener('keydown', onKey);
+    hud.classList.remove('visible');
+    gridEngine.abortGame();
+  }
+
+  function onKey(e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
+    if (e.key === 'Escape') { exitGame(); return; }
+
+    if (gridEngine.mode === 'prompt') {
+      gridEngine.beginCountdown();
+      return;
+    }
+
+    if (gridEngine.mode === 'playing') {
+      const map = { w: 'up', a: 'left', s: 'down', d: 'right' };
+      const dir = map[e.key.toLowerCase()];
+      if (dir) {
+        e.preventDefault();
+        gridEngine.setPlayerDirection(dir);
+      }
+    }
+  }
+
+  trigger.addEventListener('click', () => {
+    if (active) { exitGame(); return; }
+    active = true;
+
+    // The game runs on the light-cycle canvas specifically — force that
+    // background on if the orbit display is currently showing.
+    if (activeBackground !== 'lightcycle') {
+      if (bgToggleBtn) bgToggleBtn.click();
+      else { orbitEngine.hide(); gridEngine.show(); activeBackground = 'lightcycle'; }
+    }
+
+    if (bgToggleBtn) bgToggleBtn.disabled = true; // no swapping backgrounds mid-game
+    window.addEventListener('keydown', onKey);
+    gridEngine.beginPrompt(renderHud);
+  });
+}
+
+function setupBackgrounds() {
+  gridEngine = createGridEngine();
+  orbitEngine = createOrbitBackground();
+  setupBackgroundToggle();
+  setupSecretGame();
 }
 
 // ===================== Header scroll state =====================
@@ -879,7 +1151,7 @@ function setupFooterYear() {
 
 // ===================== Init =====================
 document.addEventListener('DOMContentLoaded', () => {
-  setupLightCycles();
+  setupBackgrounds();
   runBootSequence();
   setupTypewriter();
   setupScrambleOnLoad();
