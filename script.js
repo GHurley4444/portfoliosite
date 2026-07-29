@@ -47,6 +47,20 @@ function runBootSequence() {
   typeNext();
 }
 
+// ===================== Hero eyebrow typewriter =====================
+// scrollWidth reports the element's true content width even while it's
+// still clipped to width:0 by overflow:hidden, so this is accurate
+// regardless of font/letter-spacing quirks that a hardcoded ch value isn't.
+function setupTypewriter() {
+  const el = document.querySelector('.hero-eyebrow');
+  if (!el) return;
+  const target = el.scrollWidth;
+  requestAnimationFrame(() => {
+    el.style.width = `${target}px`;
+    el.classList.add('typed');
+  });
+}
+
 // ===================== Header scroll state =====================
 function setupHeaderScroll() {
   const header = document.getElementById('siteHeader');
@@ -381,6 +395,7 @@ function setupFooterYear() {
 // ===================== Init =====================
 document.addEventListener('DOMContentLoaded', () => {
   runBootSequence();
+  setupTypewriter();
   setupHeaderScroll();
   setupScrollSpy();
   setupReveal();

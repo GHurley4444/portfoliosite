@@ -257,13 +257,20 @@ a { color: inherit; text-decoration: none; }
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
-  width: 34ch;
+  width: 0;
   max-width: 100%;
   border-right: 2px solid var(--cyan);
-  animation: typeReveal 1.6s steps(34, end) 0.4s both, caretBlink 0.8s step-end infinite;
+  animation: caretBlink 0.8s step-end infinite;
 }
 
-@keyframes typeReveal { from { width: 0; } }
+/* Width is set to the element's true measured scrollWidth by JS (see
+   setupTypewriter in script.js) — letter-spacing makes a ch-based width
+   guess unreliable, so this transition animates to a JS-measured pixel
+   value instead of a hardcoded character count. */
+.hero-eyebrow.typed {
+  transition: width 1.4s steps(28, end);
+}
+
 @keyframes caretBlink { 50% { border-color: transparent; } }
 
 .hero-title {
