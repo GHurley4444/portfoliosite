@@ -9,13 +9,11 @@
   --cyan: #37f4ff;
   --cyan-soft: #8ff9ff;
   --blue: #2b6bff;
+  --blue-soft: #a9c4ff;
   --violet: #7c6bff;
-  --magenta: #ff4dd8;
-  --magenta-soft: #ff9bec;
+  --violet-soft: #c9c2ff;
   --amber: #ffb84d;
   --amber-soft: #ffd699;
-  --green: #5dffb0;
-  --green-soft: #a8ffd9;
   --text: #d9f6ff;
   --text-dim: #7f9bab;
   --text-dimmer: #4d6675;
@@ -28,31 +26,31 @@
 }
 
 /* Color-coded accent modifiers — apply alongside a base component class
-   (e.g. class="skill-block accent-magenta") to recolor border/glow/icon/heading. */
+   (e.g. class="skill-block accent-blue") to recolor border/glow/icon/heading.
+   Palette is built on color theory, not arbitrary neon: cyan/blue/violet are
+   analogous (adjacent hues on the wheel, ~180-250°), so they read as one
+   cohesive "brand" family. Amber is the near-exact complement of that family
+   (~35° vs a ~215° average), used sparingly as the single contrast pop —
+   the same blue/orange duality Tron itself uses. No hue outside this set. */
 .accent-cyan {
   --accent: var(--cyan); --accent-soft: var(--cyan-soft);
   --accent-border: rgba(55, 244, 255, 0.35); --accent-border-strong: rgba(55, 244, 255, 0.6);
   --accent-glow: rgba(55, 244, 255, 0.35);
 }
-.accent-magenta {
-  --accent: var(--magenta); --accent-soft: var(--magenta-soft);
-  --accent-border: rgba(255, 77, 216, 0.35); --accent-border-strong: rgba(255, 77, 216, 0.6);
-  --accent-glow: rgba(255, 77, 216, 0.35);
+.accent-blue {
+  --accent: var(--blue); --accent-soft: var(--blue-soft);
+  --accent-border: rgba(43, 107, 255, 0.35); --accent-border-strong: rgba(43, 107, 255, 0.6);
+  --accent-glow: rgba(43, 107, 255, 0.35);
+}
+.accent-violet {
+  --accent: var(--violet); --accent-soft: var(--violet-soft);
+  --accent-border: rgba(124, 107, 255, 0.35); --accent-border-strong: rgba(124, 107, 255, 0.6);
+  --accent-glow: rgba(124, 107, 255, 0.35);
 }
 .accent-amber {
   --accent: var(--amber); --accent-soft: var(--amber-soft);
   --accent-border: rgba(255, 184, 77, 0.35); --accent-border-strong: rgba(255, 184, 77, 0.6);
   --accent-glow: rgba(255, 184, 77, 0.35);
-}
-.accent-green {
-  --accent: var(--green); --accent-soft: var(--green-soft);
-  --accent-border: rgba(93, 255, 176, 0.35); --accent-border-strong: rgba(93, 255, 176, 0.6);
-  --accent-glow: rgba(93, 255, 176, 0.35);
-}
-.accent-violet {
-  --accent: var(--violet); --accent-soft: #c9c2ff;
-  --accent-border: rgba(124, 107, 255, 0.35); --accent-border-strong: rgba(124, 107, 255, 0.6);
-  --accent-glow: rgba(124, 107, 255, 0.35);
 }
 
 * { box-sizing: border-box; }
@@ -263,14 +261,14 @@ a { color: inherit; text-decoration: none; }
   font-weight: 900;
   line-height: 1.05;
   margin-bottom: 1.2rem;
-  background: linear-gradient(100deg, var(--cyan) 0%, var(--magenta) 45%, var(--violet) 75%, var(--cyan) 100%);
-  background-size: 250% auto;
+  background: linear-gradient(100deg, var(--cyan) 0%, var(--blue) 35%, var(--violet) 60%, var(--amber) 85%, var(--cyan) 100%);
+  background-size: 300% auto;
   background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 24px rgba(255, 77, 216, 0.25)) drop-shadow(0 0 34px rgba(55, 244, 255, 0.25));
-  animation: heroGradient 8s ease-in-out infinite;
+  filter: drop-shadow(0 0 24px rgba(55, 244, 255, 0.3)) drop-shadow(0 0 34px rgba(124, 107, 255, 0.2));
+  animation: heroGradient 10s ease-in-out infinite;
 }
 
 @keyframes heroGradient {
@@ -546,10 +544,10 @@ a.project-card:hover {
 }
 
 .device-menu-item:nth-child(1) { --item-color: var(--cyan); }
-.device-menu-item:nth-child(2) { --item-color: var(--magenta); }
-.device-menu-item:nth-child(3) { --item-color: var(--amber); }
-.device-menu-item:nth-child(4) { --item-color: var(--green); }
-.device-menu-item:nth-child(5) { --item-color: var(--violet); }
+.device-menu-item:nth-child(2) { --item-color: var(--blue); }
+.device-menu-item:nth-child(3) { --item-color: var(--violet); }
+.device-menu-item:nth-child(4) { --item-color: var(--amber); }
+.device-menu-item:nth-child(5) { --item-color: var(--cyan); }
 
 .device-menu-item.active {
   color: #001015;
@@ -812,8 +810,8 @@ a.project-card:hover {
 .page-title {
   font-size: clamp(2rem, 6vw, 3.4rem);
   font-weight: 900;
-  background: linear-gradient(100deg, var(--cyan) 0%, var(--magenta) 50%, var(--amber) 100%);
-  background-size: 220% auto;
+  background: linear-gradient(100deg, var(--cyan) 0%, var(--blue) 40%, var(--violet) 70%, var(--amber) 100%);
+  background-size: 260% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
