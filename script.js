@@ -61,6 +61,127 @@ function setupTypewriter() {
   });
 }
 
+// ===================== Text scramble (prescript demo) =====================
+// Mirrors the real firmware's "scramble reveal" text renderer (see
+// drawPrescript() in beeper.ino) — characters cycle through noise before
+// settling into place, left to right, instead of just appearing.
+const SCRAMBLE_CHARS = '!<>-_\\/[]{}=+*^?#ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+function scrambleText(el, finalText) {
+  const duration = Math.min(Math.max(finalText.length * 14, 400), 1400);
+  const startTime = performance.now();
+  const length = finalText.length;
+
+  function frame(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    let output = '';
+    for (let i = 0; i < length; i++) {
+      const revealPoint = (i / length) * 0.85;
+      if (finalText[i] === ' ' || progress > revealPoint) {
+        output += finalText[i];
+      } else {
+        output += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+      }
+    }
+    el.textContent = output;
+    if (progress < 1) requestAnimationFrame(frame);
+    else el.textContent = finalText;
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// ===================== Custom cursor =====================
+// Skipped on touch devices — there's no pointer to reticle-ify.
+function setupCustomCursor() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  document.body.classList.add('custom-cursor-active');
+
+  const dot = document.createElement('div');
+  dot.className = 'custom-cursor-dot';
+  const ring = document.createElement('div');
+  ring.className = 'custom-cursor-ring';
+  document.body.append(dot, ring);
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let ringX = mouseX;
+  let ringY = mouseY;
+
+  window.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') return;
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+    dot.style.opacity = '1';
+    ring.style.opacity = '1';
+  });
+
+  window.addEventListener('pointerleave', () => {
+    dot.style.opacity = '0';
+    ring.style.opacity = '0';
+  });
+
+  function loop() {
+    ringX += (mouseX - ringX) * 0.18;
+    ringY += (mouseY - ringY) * 0.18;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  const hoverTargets = 'a, button, .btn, .device, .gallery-card, .skill-block, .feature-card, .contact-link, .project-card, .ghost-card';
+  document.querySelectorAll(hoverTargets).forEach((el) => {
+    el.addEventListener('mouseenter', () => ring.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('cursor-hover'));
+  });
+}
+
+// ===================== 3D tilt on cards =====================
+function setupTilt() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const els = document.querySelectorAll('.project-card, .skill-block, .feature-card, .gallery-card');
+  els.forEach((el) => {
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 5;
+      const rotateX = -((y - rect.height / 2) / (rect.height / 2)) * 5;
+      el.style.transition = 'transform 0.1s ease';
+      el.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px) scale(1.015)`;
+    });
+    el.addEventListener('mouseleave', () => {
+      el.style.transition = 'transform 0.5s ease';
+      el.style.transform = '';
+    });
+  });
+}
+
+// ===================== Magnetic buttons =====================
+function setupMagneticButtons() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  document.querySelectorAll('.btn').forEach((el) => {
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      el.style.transition = 'transform 0.1s ease';
+      el.style.transform = `translate(${x * 0.25}px, ${y * 0.35 - 2}px)`;
+    });
+    el.addEventListener('mouseleave', () => {
+      el.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      el.style.transform = '';
+    });
+  });
+}
+
 // ===================== Header scroll state =====================
 function setupHeaderScroll() {
   const header = document.getElementById('siteHeader');
@@ -273,6 +394,7 @@ function setupPrescriptDemo() {
   const failEl = document.getElementById('demoFail');
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  let lastRenderedText = null;
 
   const state = {
     index: 0,
@@ -327,22 +449,24 @@ function setupPrescriptDemo() {
     prevEl.textContent = `< ${neighbor(-1)}`;
     nextEl.textContent = `${neighbor(1)} >`;
 
+    let taskText;
     if (cat === 'TIMED') {
       const secs = String(Math.max(state.timed.secondsLeft, 0)).padStart(2, '0');
       diffEl.textContent = `⏱ 0:${secs}`;
       streakEl.textContent = 'RARE PULL';
-      textEl.textContent = state.timed.text;
+      taskText = state.timed.text;
     } else {
       ensureLoaded(cat);
       const s = state.cats[cat];
       diffEl.textContent = `[${TIER_LABELS[s.tier]} ${s.streak}]`;
       streakEl.textContent = `s:${s.streak}`;
-      textEl.textContent = s.text;
+      taskText = s.text;
     }
 
-    textEl.classList.remove('flash');
-    void textEl.offsetWidth; // force reflow so the animation restarts
-    textEl.classList.add('flash');
+    if (taskText !== lastRenderedText) {
+      scrambleText(textEl, taskText);
+      lastRenderedText = taskText;
+    }
   }
 
   function handlePass() {
@@ -400,6 +524,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupScrollSpy();
   setupReveal();
   setupCursorGlow();
+  setupCustomCursor();
+  setupTilt();
+  setupMagneticButtons();
   setupMobileNav();
   setupPlaceholderLinks();
   setupGithubStats();
