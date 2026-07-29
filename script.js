@@ -251,9 +251,11 @@ function setupLightCycles() {
   const TICK_MS = 95;
   const ROUND_PAUSE_MS = 1600;
   const MAX_ROUND_TICKS = 500; // safety net so a round can't stall forever
-  const FLOOD_LIMIT = 55; // how far each bot "looks" when judging open space
+  const FLOOD_LIMIT = 80; // how far each bot "looks" when judging open space
   const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
   const STRAIGHT_BONUS = 3; // small preference for not zig-zagging every tick
+  const DANGER_SPACE_THRESHOLD = 22; // if even the roomiest option is this tight, it's real danger
+  const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
   const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
@@ -358,37 +360,56 @@ function setupLightCycles() {
     return best;
   }
 
-  // Score every direction the bot could take this tick (straight, or a
-  // turn) on open space + progress toward an opponent, and take the best
-  // one. Survival always wins first — a move that crashes immediately is
-  // never on the table no matter how aggressive the score looks.
+  // Every tick, for every bot: look at each direction it could actually
+  // turn to (straight, or either perpendicular turn — reversing isn't an
+  // option) and flood-fill from there to see how much open room that
+  // choice actually leaves. This is the "where am I, where are the walls"
+  // check, done properly — a straight-line ray only tells you the nearest
+  // wall in one direction, but a corridor that's wide for 3 cells and then
+  // dead-ends still reads as "close" either way, so the read has to be
+  // area-based to catch real trap risk instead of just nearby clutter.
   function chooseDirection(bot, alive) {
-    const candidates = [bot.dir, ...TURNS[bot.dir]];
+    const candidateDirs = [bot.dir, ...TURNS[bot.dir]];
     const target = nearestTarget(bot, alive);
+
+    const options = candidateDirs
+      .map((dir) => {
+        const d = DIRS[dir];
+        const nx = bot.x + d.x;
+        const ny = bot.y + d.y;
+        if (!isFree(nx, ny)) return null;
+        return { dir, nx, ny, space: floodFillSpace(nx, ny, FLOOD_LIMIT) };
+      })
+      .filter(Boolean);
+
+    // Every option was blocked — the bot is well and truly cornered.
+    // Nothing left to choose; the crash that follows is a real outcome.
+    if (!options.length) return bot.dir;
+
+    // Danger isn't "something nearby is close" (that's normal — the bot's
+    // own trail is always close behind it) — it's "even my best available
+    // option only opens onto a small pocket." When that's true, drop the
+    // chase and prioritize whichever option has the most room, full stop.
+    const maxSpace = Math.max(...options.map((o) => o.space));
+    const inDanger = maxSpace < DANGER_SPACE_THRESHOLD;
+    const aggressionScale = inDanger ? ESCAPE_AGGRESSION_CUT : 1;
 
     let bestDir = null;
     let bestScore = -Infinity;
 
-    candidates.forEach((dir) => {
-      const d = DIRS[dir];
-      const nx = bot.x + d.x;
-      const ny = bot.y + d.y;
-      if (!isFree(nx, ny)) return;
-
-      let score = floodFillSpace(nx, ny, FLOOD_LIMIT);
+    options.forEach(({ dir, nx, ny, space }) => {
+      let score = space;
       if (dir === bot.dir) score += STRAIGHT_BONUS;
       if (target) {
         const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
-        score -= dist * bot.aggression;
+        score -= dist * bot.aggression * aggressionScale;
       }
       score += Math.random() * 0.5; // light jitter so ties don't look robotic
 
       if (score > bestScore) { bestScore = score; bestDir = dir; }
     });
 
-    // Every option was blocked — the bot is cornered. Keep facing forward
-    // and let the crash happen; that's a real outcome, not a bug.
-    return bestDir || bot.dir;
+    return bestDir;
   }
 
   function triggerCrash(x, y, color) {
