@@ -144,6 +144,21 @@ function setupPlaceholderLinks() {
 }
 
 // ===================== Live GitHub stats =====================
+// Counts a stat block up from 0 to its real value instead of just
+// pasting the number in — reads as a live data feed rather than static text.
+function animateCount(el, target, duration = 900) {
+  const start = performance.now();
+  const from = 0;
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.round(from + (target - from) * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+}
+
 async function setupGithubStats() {
   const GITHUB_USER = 'GHurley4444';
   const reposEl = document.getElementById('ghRepos');
@@ -155,14 +170,17 @@ async function setupGithubStats() {
     const userRes = await fetch(`https://api.github.com/users/${GITHUB_USER}`);
     if (userRes.ok) {
       const user = await userRes.json();
-      reposEl.textContent = user.public_repos ?? '—';
-      followersEl.textContent = user.followers ?? '—';
+      if (typeof user.public_repos === 'number') animateCount(reposEl, user.public_repos);
+      else reposEl.textContent = '—';
+      if (typeof user.followers === 'number') animateCount(followersEl, user.followers);
+      else followersEl.textContent = '—';
     }
 
     const reposRes = await fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=1`);
     if (reposRes.ok) {
       const repos = await reposRes.json();
       lastRepoEl.textContent = repos && repos[0] ? repos[0].name : 'none yet';
+      lastRepoEl.classList.add('flash');
     }
   } catch (e) {
     console.info('[portfolio] GitHub API unavailable right now:', e);
