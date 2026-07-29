@@ -593,6 +593,79 @@ a.project-card:hover {
   border-color: rgba(255, 184, 77, 0.35);
 }
 
+/* Interactive demo (project-beeper.html) — buttons instead of static spans */
+.prescript-swipe button,
+.prescript-actions button {
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prescript-swipe button {
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dimmer);
+  transition: color 0.2s ease;
+}
+
+.prescript-swipe button:hover,
+.prescript-swipe button:focus-visible {
+  color: var(--cyan-soft);
+}
+
+.prescript-actions button {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(55, 244, 255, 0.25);
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prescript-actions button.pass {
+  color: var(--cyan-soft);
+  border-color: rgba(55, 244, 255, 0.35);
+}
+
+.prescript-actions button.fail {
+  color: var(--amber-soft);
+  border-color: rgba(255, 184, 77, 0.35);
+}
+
+.prescript-actions button:hover,
+.prescript-actions button:focus-visible {
+  filter: brightness(1.35);
+  box-shadow: 0 0 10px currentColor;
+}
+
+.prescript-text.flash { animation: prescriptFlash 0.3s ease; }
+@keyframes prescriptFlash { from { opacity: 0.15; } to { opacity: 1; } }
+
+.demo-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan-soft);
+  margin-bottom: 0.9rem;
+}
+
+.demo-live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+  animation: blink 1.2s step-start infinite;
+}
+
 .device-speaker-grille {
   display: flex;
   gap: 4px;

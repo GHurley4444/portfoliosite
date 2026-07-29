@@ -116,6 +116,41 @@
         </div>
       </div>
 
+      <div class="case-section accent-cyan">
+        <h2>Try the Prescript Engine</h2>
+        <div class="case-grid">
+          <div class="project-visual">
+            <div class="device" id="demoDevice">
+              <div class="device-notch"></div>
+              <div class="device-screen">
+                <div class="prescript-header">
+                  <span class="prescript-label" id="demoLabel">GAME</span>
+                  <span class="prescript-diff" id="demoDiff">[EASY 0]</span>
+                </div>
+                <div class="prescript-streak" id="demoStreak">s:0</div>
+                <div class="prescript-text" id="demoText">KILL 5 ENEMIES</div>
+                <div class="prescript-swipe">
+                  <button type="button" id="demoPrev">&lt; TIMED</button>
+                  <button type="button" id="demoNext">CITY &gt;</button>
+                </div>
+                <div class="prescript-actions">
+                  <button type="button" class="pass" id="demoPass">PASS</button>
+                  <button type="button" class="fail" id="demoFail">FAIL</button>
+                </div>
+              </div>
+              <div class="device-speaker-grille">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="demo-live-tag"><span class="demo-live-dot"></span> LIVE DEMO &mdash; RUNS IN YOUR BROWSER</p>
+            <p>Every prescript string here is copied straight out of <code>beeper.ino</code>'s own <code>easy*</code>, <code>*Prescripts</code>, <code>hard*</code>, and <code>rare*</code> pools &mdash; nothing written for the site. GAME, CON, and TASK issue short all-caps directives; CITY keeps the Index's original sentence-style phrasing.</p>
+            <p>Use the arrows to swipe between categories, the way the device's touchscreen carousel works. Hit PASS or FAIL to draw the next prescript &mdash; two PASSes in a row bump the difficulty tier, one FAIL drops it back to Easy. TIMED pulls from each category's rare pool and runs on a live countdown, same as the on-device timer menu.</p>
+          </div>
+        </div>
+      </div>
+
       <div class="case-section accent-amber">
         <h2>Hardware Build</h2>
         <p>The CYD board has no native battery input, so power had to be solved separately from the display/logic board itself.</p>
