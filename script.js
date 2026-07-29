@@ -249,9 +249,11 @@ function setupLightCycles() {
 
   const CELL = 22;
   const TICK_MS = 95;
-  const TURN_CHANCE = 0.05;
   const ROUND_PAUSE_MS = 1600;
   const MAX_ROUND_TICKS = 500; // safety net so a round can't stall forever
+  const FLOOD_LIMIT = 55; // how far each bot "looks" when judging open space
+  const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
+  const STRAIGHT_BONUS = 3; // small preference for not zig-zagging every tick
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
   const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
@@ -281,7 +283,11 @@ function setupLightCycles() {
     const x = margin + Math.floor(Math.random() * Math.max(cols - margin * 2, 1));
     const y = margin + Math.floor(Math.random() * Math.max(rows - margin * 2, 1));
     const dir = Object.keys(DIRS)[Math.floor(Math.random() * 4)];
-    return { id, color, x, y, dir, alive: true, trail: [{ x, y }] };
+    // Per-bot aggression gives each one a slightly different personality —
+    // some chase harder, some play it a bit safer — instead of four
+    // identical decision-makers.
+    const aggression = 1 + Math.random() * 0.8;
+    return { id, color, x, y, dir, alive: true, trail: [{ x, y }], aggression };
   }
 
   function resize() {
@@ -310,24 +316,79 @@ function setupLightCycles() {
     startRound();
   }
 
-  // 1-cell lookahead: prefer straight, but dodge if the next cell is a wall.
-  function chooseDirection(bot) {
-    let dir = bot.dir;
-    const ahead = DIRS[dir];
-    const forwardBlocked = !isFree(bot.x + ahead.x, bot.y + ahead.y);
-
-    if (forwardBlocked || Math.random() < TURN_CHANCE) {
-      const options = [...TURNS[dir]];
-      // Shuffle so left/right bias isn't fixed.
-      if (Math.random() < 0.5) options.reverse();
-      for (const opt of options) {
-        const d = DIRS[opt];
-        if (isFree(bot.x + d.x, bot.y + d.y)) { dir = opt; break; }
+  // Bounded flood-fill from a candidate cell — how much open space does
+  // committing to this move actually leave the bot? This is what stops
+  // bots from coiling into their own trail: a move that looks fine one
+  // step ahead but boxes them into a small pocket scores low here and
+  // gets passed over in favor of a direction with real room to move.
+  function floodFillSpace(startX, startY, limit) {
+    if (!isFree(startX, startY)) return 0;
+    const visited = new Set([`${startX},${startY}`]);
+    const queue = [[startX, startY]];
+    let count = 0;
+    while (queue.length && count < limit) {
+      const [cx, cy] = queue.shift();
+      count++;
+      const neighbors = [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]];
+      for (const [nx, ny] of neighbors) {
+        const key = `${nx},${ny}`;
+        if (!visited.has(key) && isFree(nx, ny)) {
+          visited.add(key);
+          queue.push([nx, ny]);
+        }
       }
-      // If neither side is free either, keep going straight and let it crash —
-      // a cornered runner dying is authentic, not a bug.
     }
-    return dir;
+    return count;
+  }
+
+  // Aim a little ahead of the nearest opponent's current heading rather
+  // than straight at them, so bots read as trying to cut a path off
+  // instead of just tailgating.
+  function nearestTarget(bot, alive) {
+    let best = null;
+    let bestDist = Infinity;
+    alive.forEach((other) => {
+      if (other === bot) return;
+      const ahead = DIRS[other.dir];
+      const tx = other.x + ahead.x * PREDICT_AHEAD;
+      const ty = other.y + ahead.y * PREDICT_AHEAD;
+      const dist = Math.abs(tx - bot.x) + Math.abs(ty - bot.y);
+      if (dist < bestDist) { bestDist = dist; best = { x: tx, y: ty }; }
+    });
+    return best;
+  }
+
+  // Score every direction the bot could take this tick (straight, or a
+  // turn) on open space + progress toward an opponent, and take the best
+  // one. Survival always wins first — a move that crashes immediately is
+  // never on the table no matter how aggressive the score looks.
+  function chooseDirection(bot, alive) {
+    const candidates = [bot.dir, ...TURNS[bot.dir]];
+    const target = nearestTarget(bot, alive);
+
+    let bestDir = null;
+    let bestScore = -Infinity;
+
+    candidates.forEach((dir) => {
+      const d = DIRS[dir];
+      const nx = bot.x + d.x;
+      const ny = bot.y + d.y;
+      if (!isFree(nx, ny)) return;
+
+      let score = floodFillSpace(nx, ny, FLOOD_LIMIT);
+      if (dir === bot.dir) score += STRAIGHT_BONUS;
+      if (target) {
+        const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
+        score -= dist * bot.aggression;
+      }
+      score += Math.random() * 0.5; // light jitter so ties don't look robotic
+
+      if (score > bestScore) { bestScore = score; bestDir = dir; }
+    });
+
+    // Every option was blocked — the bot is cornered. Keep facing forward
+    // and let the crash happen; that's a real outcome, not a bug.
+    return bestDir || bot.dir;
   }
 
   function triggerCrash(x, y, color) {
@@ -351,7 +412,7 @@ function setupLightCycles() {
     // Decide moves from current grid state, then resolve all at once so
     // order doesn't matter and simultaneous head-ons are caught correctly.
     const moves = alive.map((b) => {
-      const dir = chooseDirection(b);
+      const dir = chooseDirection(b, alive);
       const d = DIRS[dir];
       return { bot: b, dir, nx: b.x + d.x, ny: b.y + d.y };
     });
