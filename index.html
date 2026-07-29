@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garrett Hurley // Cybersecurity</title>
+<meta name="description" content="Garrett Hurley — Cybersecurity portfolio. Security operations, penetration testing, systems administration, and hardware projects.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<div class="boot-overlay" id="bootOverlay" aria-hidden="true">
+  <div class="boot-text" id="bootText"></div>
+</div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="#top" class="logo">GH<span class="logo-dot">_</span><span class="logo-sub">SYS</span></a>
+    <nav class="main-nav">
+      <a href="#about" data-nav="about">ABOUT</a>
+      <a href="#projects" data-nav="projects">PROJECTS</a>
+      <a href="#skills" data-nav="skills">SKILLS</a>
+      <a href="#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <p class="hero-eyebrow" data-typing>SYSTEM ONLINE // IDENTITY VERIFIED</p>
+      <h1 class="hero-title">
+        <span class="glitch-wrap" data-text="GARRETT HURLEY">GARRETT HURLEY</span>
+      </h1>
+      <p class="hero-subtitle">CYBERSECURITY &mdash; SECURITY OPERATIONS &middot; PENETRATION TESTING &middot; SYSTEMS ADMINISTRATION</p>
+      <p class="hero-desc">I build, break, and defend systems — from SOC-style triage to hands-on penetration testing to embedded hardware built from bare components. This site tracks the projects along the way, starting with <strong>Beeper</strong>, a handheld recon device built from scratch.</p>
+      <div class="hero-actions">
+        <a href="#projects" class="btn btn-primary">VIEW PROJECTS</a>
+        <a href="#contact" class="btn btn-ghost">CONTACT</a>
+      </div>
+    </div>
+    <a href="#about" class="scroll-cue" aria-label="Scroll down">
+      <span class="scroll-cue-line"></span>
+      SCROLL
+    </a>
+  </section>
+
+  <section class="section" id="about">
+    <div class="section-inner">
+      <p class="section-kicker">// 01 &nbsp;ABOUT</p>
+      <h2 class="section-title reveal">Profile</h2>
+      <div class="about-grid">
+        <div class="about-copy reveal">
+          <p>I'm working toward roles across security operations, penetration testing, and systems administration — the kind of background that comes from understanding a system well enough to both administer it and find where it breaks.</p>
+          <p>Outside of formal work, I build hands-on projects to keep that understanding sharp: writing firmware, wiring up circuits, and building tools that do real reconnaissance rather than just simulate it. <strong>Beeper</strong>, below, is the first of those projects documented here — more are on the way.</p>
+        </div>
+        <div class="about-stats reveal">
+          <div class="stat-block">
+            <span class="stat-label">FOCUS</span>
+            <span class="stat-value">SOC &middot; Pentest &middot; SysAdmin</span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-label">CERT (IN PROGRESS)</span>
+            <span class="stat-value">CompTIA Network+</span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-label">CURRENT BUILD</span>
+            <span class="stat-value">ESP32 handheld recon device</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="projects">
+    <div class="section-inner">
+      <p class="section-kicker">// 02 &nbsp;FEATURED PROJECT</p>
+      <h2 class="section-title reveal">Beeper</h2>
+      <p class="section-lede reveal">A handheld cybersecurity gadget, built from a bare ESP32 dev board up — custom firmware, passive recon tools, and hand-wired power/audio hardware.</p>
+
+      <div class="project-card reveal">
+        <div class="project-visual" aria-hidden="true">
+          <div class="device">
+            <div class="device-notch"></div>
+            <div class="device-screen">
+              <div class="device-screen-header">
+                <span class="dot"></span> BEEPER<span class="blink">_</span>
+              </div>
+              <div class="device-menu">
+                <div class="device-menu-item active">GAME</div>
+                <div class="device-menu-item">CITY</div>
+                <div class="device-menu-item">CON</div>
+                <div class="device-menu-item">TASK</div>
+                <div class="device-menu-item">TIMED</div>
+              </div>
+              <div class="device-status">WIFI &middot; SCAN &middot; BLE &middot; QR</div>
+            </div>
+            <div class="device-speaker-grille">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-body">
+          <p>Beeper runs on a "Cheap Yellow Display" ESP32 board (ESP32-2432S028R) with a TFT_eSPI display and XPT2046 resistive touchscreen. The firmware is a fully custom, touchscreen-driven system with its own menu architecture, screen state machine, and persistence layer &mdash; no off-the-shelf app framework.</p>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <span class="feature-icon">&#9673;</span>
+              <h3>Passive Recon Tools</h3>
+              <p>Read-only WiFi scanner, BLE scanner with AirTag/Tile tracker detection, and a Bluetooth Classic scanner. No injection or pairing — observation only.</p>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">&#9635;</span>
+              <h3>From-Scratch QR Engine</h3>
+              <p>A QR code generator and renderer built without an external library, driven straight from the touchscreen UI.</p>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">&#9673;</span>
+              <h3>Prescript Game Engine</h3>
+              <p>A touchscreen menu system (GAME &middot; CITY &middot; CON &middot; TASK &middot; TIMED) with Easy/Normal/Hard/Rare difficulty tiers, streaks, and run history.</p>
+            </div>
+            <div class="feature-card">
+              <span class="feature-icon">&#9889;</span>
+              <h3>Hand-Wired Hardware</h3>
+              <p>3000mAh LiPo battery through a load-sharing charge/boost circuit, a Class-D amp driving small speakers via an RC filter, breadboard-prototyped end to end.</p>
+            </div>
+          </div>
+
+          <div class="tech-tags">
+            <span>C++ / Arduino</span>
+            <span>ESP32</span>
+            <span>TFT_eSPI</span>
+            <span>XPT2046 Touch</span>
+            <span>WiFi / BLE APIs</span>
+            <span>Embedded Systems</span>
+            <span>Circuit Design</span>
+          </div>
+
+          <div class="project-links">
+            <span class="project-link-note">Firmware repo is private &mdash; available on request.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="more-projects reveal">
+        <div class="ghost-card">
+          <span class="ghost-tag">// NEXT MODULE</span>
+          <p>Home lab build-out</p>
+        </div>
+        <div class="ghost-card">
+          <span class="ghost-tag">// QUEUED</span>
+          <p>More projects loading soon</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="skills">
+    <div class="section-inner">
+      <p class="section-kicker">// 03 &nbsp;SKILLS</p>
+      <h2 class="section-title reveal">Capabilities</h2>
+      <div class="skills-grid">
+        <div class="skill-block reveal">
+          <h3>Security Operations</h3>
+          <div class="tech-tags"><span>SOC Triage</span><span>IOC Analysis</span><span>NIST CSF</span><span>CVSS</span></div>
+        </div>
+        <div class="skill-block reveal">
+          <h3>Offensive Security</h3>
+          <div class="tech-tags"><span>Penetration Testing</span><span>Red Teaming</span><span>OWASP</span></div>
+        </div>
+        <div class="skill-block reveal">
+          <h3>Systems Administration</h3>
+          <div class="tech-tags"><span>Help Desk / Service Desk</span><span>Active Directory / GPO</span></div>
+        </div>
+        <div class="skill-block reveal">
+          <h3>Embedded &amp; Hardware</h3>
+          <div class="tech-tags"><span>ESP32 / Arduino</span><span>Circuit Design</span><span>Firmware (C++)</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="activity">
+    <div class="section-inner">
+      <p class="section-kicker">// 03B &nbsp;LIVE ACTIVITY</p>
+      <h2 class="section-title reveal">GitHub Signal</h2>
+      <p class="section-lede reveal">Pulled live from the public GitHub API &mdash; no cached data.</p>
+      <div class="github-panel reveal">
+        <div class="github-stats" id="githubStats">
+          <div class="stat-block"><span class="stat-label">PUBLIC REPOS</span><span class="stat-value" id="ghRepos">&mdash;</span></div>
+          <div class="stat-block"><span class="stat-label">FOLLOWERS</span><span class="stat-value" id="ghFollowers">&mdash;</span></div>
+          <div class="stat-block"><span class="stat-label">LAST UPDATED REPO</span><span class="stat-value" id="ghLastRepo">&mdash;</span></div>
+        </div>
+        <img class="github-chart" src="https://ghchart.rshah.org/37f4ff/GHurley4444" alt="Garrett Hurley's GitHub contribution chart" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="contact">
+    <div class="section-inner">
+      <p class="section-kicker">// 04 &nbsp;CONTACT</p>
+      <h2 class="section-title reveal">Get in touch</h2>
+      <div class="contact-panel reveal">
+        <p>Open to security operations, penetration testing, systems administration, and help desk roles. Reach out directly:</p>
+        <div class="contact-links">
+          <a href="mailto:g.hurleycareer@gmail.com" class="contact-link">
+            <span class="contact-label">EMAIL</span>
+            <span class="contact-value">g.hurleycareer@gmail.com</span>
+          </a>
+          <a href="https://github.com/GHurley4444" target="_blank" rel="noopener" class="contact-link">
+            <span class="contact-label">GITHUB</span>
+            <span class="contact-value">github.com/GHurley4444</span>
+          </a>
+          <a href="https://www.linkedin.com/in/garretthurley4444/" target="_blank" rel="noopener" class="contact-link">
+            <span class="contact-label">LINKEDIN</span>
+            <span class="contact-value">in/garretthurley4444</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
