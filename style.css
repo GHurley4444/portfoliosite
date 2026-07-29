@@ -94,6 +94,62 @@ a { color: inherit; text-decoration: none; }
   100% { background-position: 0 46px, 46px 0; }
 }
 
+.orbit-bg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 1400px;
+  height: 1400px;
+  max-width: 160vmax;
+  max-height: 160vmax;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: screen;
+  mask-image: radial-gradient(circle at 50% 50%, black 0%, black 35%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 0%, black 35%, transparent 72%);
+}
+
+.orbit-bg svg { width: 100%; height: 100%; display: block; }
+
+.orbit-ring circle,
+.orbit-ring line {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 1;
+}
+
+.orbit-ring-outer { transform-origin: 400px 400px; animation: spinCW 100s linear infinite; }
+.orbit-ring-mid {
+  transform-origin: 400px 400px;
+  animation: spinCCW 70s linear infinite;
+}
+.orbit-ring-mid circle { stroke: var(--violet); }
+.orbit-ring-inner {
+  transform-origin: 400px 400px;
+  animation: spinCW 45s linear infinite;
+}
+.orbit-ring-inner circle,
+.orbit-ring-inner line { stroke: var(--cyan-soft); }
+
+@keyframes spinCW { to { transform: rotate(360deg); } }
+@keyframes spinCCW { to { transform: rotate(-360deg); } }
+
+.orbit-sweep {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(55, 244, 255, 0.22) 18deg, transparent 46deg);
+  animation: spinCW 7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring-outer, .orbit-ring-mid, .orbit-ring-inner, .orbit-sweep {
+    animation: none;
+  }
+}
+
 .scanline {
   position: fixed;
   inset: 0;

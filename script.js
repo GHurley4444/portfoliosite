@@ -192,6 +192,39 @@ function setupMagneticButtons() {
   });
 }
 
+// ===================== Rotating orbit background =====================
+// Injected once via JS rather than duplicated across all three HTML files.
+// Concentric rings turning at different speeds (some clockwise, some not)
+// plus a fast radar-style sweep, sitting behind all page content.
+function setupOrbitBackground() {
+  if (document.querySelector('.orbit-bg')) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'orbit-bg';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML = `
+    <div class="orbit-sweep"></div>
+    <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+      <g class="orbit-ring orbit-ring-outer">
+        <circle cx="400" cy="400" r="380"></circle>
+        <circle cx="400" cy="400" r="360" stroke-dasharray="2 16"></circle>
+      </g>
+      <g class="orbit-ring orbit-ring-mid">
+        <circle cx="400" cy="400" r="270" stroke-dasharray="1 10"></circle>
+        <circle cx="400" cy="400" r="250"></circle>
+      </g>
+      <g class="orbit-ring orbit-ring-inner">
+        <circle cx="400" cy="400" r="150"></circle>
+        <line x1="400" y1="20" x2="400" y2="70"></line>
+        <line x1="400" y1="730" x2="400" y2="780"></line>
+        <line x1="20" y1="400" x2="70" y2="400"></line>
+        <line x1="730" y1="400" x2="780" y2="400"></line>
+      </g>
+    </svg>
+  `;
+  document.body.prepend(wrap);
+}
+
 // ===================== Header scroll state =====================
 function setupHeaderScroll() {
   const header = document.getElementById('siteHeader');
@@ -536,6 +569,7 @@ function setupFooterYear() {
 
 // ===================== Init =====================
 document.addEventListener('DOMContentLoaded', () => {
+  setupOrbitBackground();
   runBootSequence();
   setupTypewriter();
   setupScrambleOnLoad();
