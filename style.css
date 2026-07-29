@@ -94,6 +94,16 @@ a { color: inherit; text-decoration: none; }
   100% { background-position: 0 46px, 46px 0; }
 }
 
+.lightcycle-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+
+/* ===================== Rotating orbit background (pocketed, unused) ===================== */
 .orbit-bg {
   position: fixed;
   top: 50%;

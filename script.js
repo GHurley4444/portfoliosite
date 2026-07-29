@@ -192,7 +192,10 @@ function setupMagneticButtons() {
   });
 }
 
-// ===================== Rotating orbit background =====================
+// ===================== Rotating orbit background (pocketed) =====================
+// Not currently used — swapped out for the light-cycle grid background below,
+// but left intact (function + matching CSS in style.css) in case it comes
+// back later. Not called from the init block at the bottom of this file.
 // Injected once via JS rather than duplicated across all three HTML files.
 // Concentric rings turning at different speeds (some clockwise, some not)
 // plus a fast radar-style sweep, sitting behind all page content.
@@ -223,6 +226,119 @@ function setupOrbitBackground() {
     </svg>
   `;
   document.body.prepend(wrap);
+}
+
+// ===================== Light-cycle grid background =====================
+// Top-down grid runners that move in straight lines, turn at right angles,
+// and leave a fading light trail behind them — respawn from a random edge
+// whenever they run off the viewport. Canvas-based for cheap per-frame draws.
+function setupLightCycles() {
+  if (document.querySelector('.lightcycle-bg')) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'lightcycle-bg';
+  canvas.setAttribute('aria-hidden', 'true');
+  document.body.prepend(canvas);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const CELL = 26;
+  const TICK_MS = 90;
+  const MAX_TRAIL = 160;
+  const TURN_CHANCE = 0.045;
+  const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff', '#37f4ff'];
+
+  const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+  const TURNS = { up: ['left', 'right'], down: ['left', 'right'], left: ['up', 'down'], right: ['up', 'down'] };
+
+  let cols = 0;
+  let rows = 0;
+  let cycles = [];
+  let dpr = Math.max(window.devicePixelRatio || 1, 1);
+  let tickHandle = null;
+
+  function spawnCycle(color) {
+    const edge = Math.floor(Math.random() * 4);
+    let x, y, dir;
+    if (edge === 0) { x = Math.floor(Math.random() * cols); y = 0; dir = 'down'; }
+    else if (edge === 1) { x = cols - 1; y = Math.floor(Math.random() * rows); dir = 'left'; }
+    else if (edge === 2) { x = Math.floor(Math.random() * cols); y = rows - 1; dir = 'up'; }
+    else { x = 0; y = Math.floor(Math.random() * rows); dir = 'right'; }
+    return { x, y, dir, color, trail: [{ x, y }] };
+  }
+
+  function resize() {
+    dpr = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.ceil(window.innerWidth / CELL);
+    rows = Math.ceil(window.innerHeight / CELL);
+  }
+
+  function reset() {
+    resize();
+    cycles = COLORS.map(spawnCycle);
+    draw();
+  }
+
+  function tick() {
+    cycles.forEach((c) => {
+      if (Math.random() < TURN_CHANCE) {
+        const opts = TURNS[c.dir];
+        c.dir = opts[Math.floor(Math.random() * opts.length)];
+      }
+      const d = DIRS[c.dir];
+      c.x += d.x;
+      c.y += d.y;
+
+      if (c.x < 0 || c.x >= cols || c.y < 0 || c.y >= rows) {
+        Object.assign(c, spawnCycle(c.color));
+        return;
+      }
+
+      c.trail.push({ x: c.x, y: c.y });
+      if (c.trail.length > MAX_TRAIL) c.trail.shift();
+    });
+    draw();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    cycles.forEach((c) => {
+      for (let i = 1; i < c.trail.length; i++) {
+        const alpha = (i / c.trail.length) * 0.5;
+        ctx.strokeStyle = c.color;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(c.trail[i - 1].x * CELL + CELL / 2, c.trail[i - 1].y * CELL + CELL / 2);
+        ctx.lineTo(c.trail[i].x * CELL + CELL / 2, c.trail[i].y * CELL + CELL / 2);
+        ctx.stroke();
+      }
+      const head = c.trail[c.trail.length - 1];
+      if (head) {
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = c.color;
+        ctx.shadowColor = c.color;
+        ctx.shadowBlur = 8;
+        ctx.fillRect(head.x * CELL + CELL / 2 - 3, head.y * CELL + CELL / 2 - 3, 6, 6);
+        ctx.shadowBlur = 0;
+      }
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  window.addEventListener('resize', () => {
+    reset();
+  });
+
+  reset();
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  tickHandle = setInterval(tick, TICK_MS);
 }
 
 // ===================== Header scroll state =====================
@@ -569,7 +685,7 @@ function setupFooterYear() {
 
 // ===================== Init =====================
 document.addEventListener('DOMContentLoaded', () => {
-  setupOrbitBackground();
+  setupLightCycles();
   runBootSequence();
   setupTypewriter();
   setupScrambleOnLoad();
