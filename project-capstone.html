@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cybersecurity Capstone // Garrett Hurley</title>
-<meta name="description" content="Towson University Cybersecurity Capstone — a full Active Directory lab, an end-to-end simulated penetration test, and a CVSS-scored report, alongside hardening and monitoring Windows Server, Windows 10, and Ubuntu Linux systems.">
+<meta name="description" content="Towson University Cybersecurity Capstone (TU Case Studies, Team Texas) — a semester-long red/blue exercise across a ~40-VM Proxmox environment: Active Directory builds, offensive operations, and real incident response.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
     <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
     <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // CAPSTONE</p>
     <h1 class="page-title" data-scramble-load>Cybersecurity Capstone</h1>
-    <p class="page-desc">A team-based cybersecurity capstone at Towson University — standing up a full Active Directory lab, running a simulated penetration test against it end to end, and delivering a formal CVSS-scored report, alongside hardening and defending Windows Server, Windows 10, and Ubuntu Linux systems.</p>
+    <p class="page-desc">Towson University's Case Studies capstone — a semester-long, five-team red/blue exercise on a shared Proxmox cluster. As Team Texas, we built and defended roughly 40 VMs across half a dozen Active Directory domains, ran offensive operations against rival teams, and handled real incident response when the Red Team (and everyone else) came for us back.</p>
   </section>
 
   <section class="section">
@@ -52,78 +52,110 @@
 
       <div class="case-section accent-violet reveal">
         <h2>The Exercise</h2>
-        <p>Towson University's Cybersecurity Capstone (Spring 2025) put teams in charge of an enterprise-style environment spanning Windows Server, Windows 10, and Ubuntu Linux. The build stood up a full Active Directory lab, then ran a simulated penetration test against it end to end — reconnaissance through exploitation — closing with a formal, CVSS-scored report, alongside the defensive side: keeping services correctly configured and monitored against the vulnerabilities that assessment surfaced.</p>
-        <div class="case-todo">
-          <strong>TODO — fill in:</strong> exact competition format (scored attack-defense round? red team scoring live during the event? a set number of injects/tasks?), team size and how work was split, and the overall timeline (one exercise day vs. a semester-long build).
-        </div>
+        <p>Five teams &mdash; Texas, California, Florida, Illinois, and New Jersey &mdash; each ran their own slice of a shared Proxmox environment: multiple Active Directory domains, Linux and Windows hosts, web and file services, all wired into a credit economy where system uptime earned currency and currency bought flags. A Red Team attacked everyone. So did the other four teams, whenever they got the chance. The exercise ran in Episodes, each closing out with an after-action report; I worked alongside four teammates (Justin R., Jaelyn M., Sarah W., and Luis S.) as Team Texas.</p>
+        <p>That structure meant the work was never purely offense or purely defense. The same week we were sniffing credentials out of another team's SSH sessions, we were also tracing down how someone had drained our own bank to zero. Both sides of that fed into the other &mdash; understanding how an attacker covers their tracks is exactly what let us catch one doing it to us.</p>
       </div>
 
       <div class="case-section accent-cyan reveal">
-        <h2>What I Worked On</h2>
+        <h2>Infrastructure We Built</h2>
         <div class="feature-grid">
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9673;</span>
-            <h3>Service Hardening</h3>
-            <p>Secured SSH, Apache, and SMB across the environment — closing default configurations and unnecessary exposure before they could be used as an entry point.</p>
+            <h3>Active Directory Domains</h3>
+            <p>Stood up the Textile subdomain from scratch &mdash; a new forest, a Windows Server 2022 domain controller at Lewisville, DNS zones configured and verified, then joined additional hosts as IIS web servers.</p>
           </div>
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9678;</span>
-            <h3>Monitoring &amp; Detection</h3>
-            <p>Watched the environment with Graylog and Wireshark, correlating log activity and packet captures to catch what was actually happening on the network in real time.</p>
+            <h3>Segmented Firewall</h3>
+            <p>Built a new domain behind an IPFire firewall using a GREEN/ORANGE/RED design &mdash; internal network, DMZ, and external &mdash; with a domain controller, workstation, and MySQL server inside GREEN, and DNS/Apache exposed in ORANGE.</p>
           </div>
           <div class="feature-card accent-amber">
             <span class="feature-icon">&#9635;</span>
-            <h3>Active Directory Lab</h3>
-            <p>Stood up a full AD environment as the target for the exercise — domain, group policy, and the kind of realistic misconfigurations that make AD such a common attack surface in the real world.</p>
+            <h3>Multi-Distro Web Deployment</h3>
+            <p>Deployed Apache across four Linux hosts on three different distros (Rocky Linux, Ubuntu, openSUSE) and three subdomains, each with its own virtual host and DNS record.</p>
           </div>
           <div class="feature-card accent-blue">
             <span class="feature-icon">&#9889;</span>
-            <h3>Offensive Assessment</h3>
-            <p>Ran a simulated penetration test end to end with Kali Linux and Nmap — reconnaissance through exploitation — against the team's own AD environment.</p>
+            <h3>Internal PKI / HTTPS</h3>
+            <p>Stood up our own Certificate Authority to sign CSRs from every Apache host, then distributed the CA cert for the fleet to trust &mdash; every internal service running real HTTPS instead of self-signed warnings.</p>
           </div>
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9679;</span>
-            <h3>CVSS-Scored Reporting</h3>
-            <p>Closed the assessment with a formal report: each finding scored by CVSS severity and paired with a concrete remediation — the deliverable a real client engagement would expect.</p>
+            <h3>SIEM Operations</h3>
+            <p>Ran Graylog as the team's central log pipeline &mdash; used it to catch active intrusions, and rebuilt it more than once after it became a target itself.</p>
           </div>
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9673;</span>
-            <h3>Enterprise System Administration</h3>
-            <p>Managed Windows Server, Windows 10, and Ubuntu Linux hosts side by side, including firewall rules and the database services running on top of them.</p>
+            <h3>Key-Based SSH Rollout</h3>
+            <p>Moved the team from password to public-key SSH auth team-wide, and used the rollout as a chance to audit every host's <code>authorized_keys</code> for backdoors other teams had already planted.</p>
           </div>
         </div>
       </div>
 
       <div class="case-section accent-amber reveal">
-        <h2>Findings &amp; Fixes</h2>
-        <p>The specific findings from the CVSS-scored report belong here — this is the section that turns "I did a capstone" into proof you can actually run an assessment and write it up like a professional would.</p>
-        <div class="case-todo">
-          <strong>TODO — replace with 2&ndash;4 real findings</strong> straight out of your report, formatted like the spec list below. For each: what the vulnerability was, its CVSS score/severity, how it was found (recon step, tool, technique), and the remediation you recommended. A redacted screenshot or excerpt from the actual report would work well here.
-        </div>
+        <h2>Incident Response</h2>
+        <p>This is the part of the exercise that mattered most for how I actually think about defense: we weren't hardening a system against a hypothetical, we were responding to real, ongoing intrusions from people actively trying to stay hidden.</p>
         <ul class="spec-list">
-          <li><strong>EXAMPLE FINDING &mdash; CVSS [X.X]</strong>[Replace: e.g. "Kerberoastable service account with a weak password — cracked offline, remediated with a managed service account + strong passphrase."]</li>
-          <li><strong>EXAMPLE FINDING &mdash; CVSS [X.X]</strong>[Replace: e.g. "SMB share allowed anonymous listing — closed via [specific config change]."]</li>
-          <li><strong>EXAMPLE FINDING &mdash; CVSS [X.X]</strong>[Replace: e.g. "Nmap scan surfaced an outdated Apache module — patched and re-scanned to confirm."]</li>
+          <li><strong>PERSISTENT PROXY BACKDOOR</strong>Our shared bank balance dropped from over 1,200 credits to zero overnight &mdash; every team got hit the same way, which pointed at the Red Team. Digging through cron jobs and running processes on our proxy turned up unauthorized SSH public keys that a script kept silently re-adding every time we deleted them, plus a Python reverse-shell dropper exfiltrating our bash history and password changes. We rotated the proxy password, removed the persistence script, and started routinely auditing <code>ps aux</code> for anything that didn't belong.</li>
+          <li><strong>DOMAIN CONTROLLER LOSS &amp; REBUILD</strong>Team New Jersey took out half our Steel domain in a single incident, including both domain controllers and our file server. No recent backups meant a full rebuild from scratch &mdash; which turned into an opportunity, since that domain had been inherited from a previous team with unknown misconfigurations baked in. We rebuilt it deliberately more securely than it started, and came out of it with a much stronger case for regular backups going forward.</li>
+          <li><strong>SPOOFED ACCOUNTS &amp; REVERSE-SHELL CRON</strong>Unauthorized SSH keys kept reappearing on our proxy even after removal, traced to a script (<code>p.sh</code>) that re-added users, reinjected keys into both regular and root accounts, and had modified our PAM stack to quietly log plaintext passwords. A cron job was firing a reverse shell back to an external host every night at 3 AM. We also found a planted account, tied to an attacker alias we'd already seen on a previous incident, sitting in <code>/etc/shadow</code>. Script and account both got pulled, PAM got rebuilt clean.</li>
+          <li><strong>ACTIVE SESSION DETECTION</strong>On two more hosts, we found duplicate SSH keys and foreign entries in <code>known_hosts</code> &mdash; and on one of them, <code>netstat</code> turned up a live external SSH session mid-attack. We killed the session, rotated both root passwords immediately, and cleaned the compromised host state.</li>
+          <li><strong>UNAUTHORIZED SOFTWARE (&quot;DUCK PROGRAM&quot;)</strong>Several Windows hosts started showing animated ducks walking across the screen and random notepad pop-ups &mdash; harmless-looking, but unauthorized and worth taking seriously. Traced it to a modified prankware tool dropped via remote task execution, confirmed no persistence had been left behind using Autoruns, Registry Editor, and PowerShell, then removed it cleanly.</li>
         </ul>
       </div>
 
       <div class="case-section accent-blue reveal">
+        <h2>Offensive Operations</h2>
+        <p>We ran attacks of our own against the other four teams &mdash; not just to score points, but because seeing an attack from the operator's side is what makes the defensive side click. A few of these are worth calling out specifically.</p>
+        <div class="feature-grid">
+          <div class="feature-card accent-blue">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Default-Credential Foothold</h3>
+            <p>Found a rival team's Cockpit web interface still on its default login while everyone else had locked theirs down or turned it off. Used it to establish and maintain persistence &mdash; a reminder of how much a single missed default credential can cost.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9678;</span>
+            <h3>A Failed Phishing Op</h3>
+            <p>Crafted and sent a phishing payload disguised as a Windows security patch through an internal phishing platform &mdash; and it failed, because the target host turned out to be a domain controller rather than a workstation. Domain controllers don't execute phishing payloads the way an end-user machine does. Good lesson in target validation before launch, not after.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9635;</span>
+            <h3>SSH Credential Sniffing</h3>
+            <p>From an existing foothold, escalated to root and attached <code>strace</code> to the running <code>sshd</code> process to read plaintext logins straight out of process memory &mdash; no need to crack a hash if you can just watch it go by. Turned the recovered credentials into a filtered wordlist (<code>john --incremental</code>, piped through a few passes of grep/awk to cut obviously-weak patterns) and ran it through Hydra in parallel chunks to brute-force the shared password prefix across the rest of that domain.</p>
+          </div>
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9889;</span>
+            <h3>Cross-Domain Lateral Movement</h3>
+            <p>Reused the recovered credentials to move across multiple hosts in the target domain rather than stopping at the first compromised box &mdash; the same "how far does one password actually reach" question that later shaped how seriously we took our own key-based SSH rollout.</p>
+          </div>
+        </div>
+        <p>Part of that same operation covered establishing longer-term backdoor access on both Linux and Windows targets, and covering our tracks on the systems we'd touched &mdash; disguised persistence mechanisms designed to survive a reboot and blend in with legitimate services, plus deliberately tampering with the target's own logging pipeline to make an intrusion look like a natural service failure instead. I'm intentionally not publishing the exact scripts here: even against a retired lab, that's a working persistence-and-anti-forensics playbook, and there's no real portfolio value in the literal code over the methodology. Happy to walk through it directly if it comes up in an interview.</p>
+      </div>
+
+      <div class="case-section accent-violet reveal">
         <h2>Tech Stack</h2>
         <div class="tech-tags">
-          <span>Windows Server</span>
-          <span>Windows 10</span>
-          <span>Ubuntu Linux</span>
+          <span>Proxmox</span>
+          <span>Windows Server 2022</span>
           <span>Active Directory / GPO</span>
+          <span>IIS</span>
+          <span>Rocky Linux</span>
+          <span>Ubuntu</span>
+          <span>openSUSE</span>
+          <span>IPFire</span>
+          <span>Apache</span>
+          <span>MySQL</span>
+          <span>BIND DNS</span>
+          <span>Internal CA / TLS</span>
+          <span>Graylog</span>
           <span>Kali Linux</span>
           <span>Nmap</span>
           <span>Wireshark</span>
-          <span>Graylog</span>
-          <span>CVSS / CVE</span>
-          <span>Firewalls</span>
+          <span>strace</span>
+          <span>Hydra</span>
+          <span>John the Ripper</span>
           <span>SSH</span>
-          <span>Apache</span>
-          <span>SMB</span>
-          <span>SQL</span>
+          <span>Incident Response</span>
         </div>
         <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
           <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
