@@ -283,7 +283,7 @@ function scrambleText(el, finalText) {
     let output = '';
     for (let i = 0; i < length; i++) {
       const revealPoint = (i / length) * 0.85;
-      if (finalText[i] === ' ' || progress > revealPoint) {
+      if (finalText[i] === ' ' || finalText[i] === '\n' || progress > revealPoint) {
         output += finalText[i];
       } else {
         output += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
@@ -1444,6 +1444,376 @@ const TIER_LABELS = { easy: 'EASY', normal: 'NORM', hard: 'HARD' };
 const CATEGORY_ORDER = ['GAME', 'CITY', 'CON', 'TASK', 'TIMED'];
 const TIMED_SECONDS = 20;
 
+// ===================== Beeper device menu shell =====================
+// The interactive demo on project-beeper.html now behaves like the real
+// device's menu system: a home screen with an app grid (PRESCRIPT, RECON,
+// TOOLS, LYRICS), each app living in its own absolutely-positioned
+// .app-screen inside #deviceScreen, swapped via [data-open]/[data-back]/
+// [data-back-to] buttons rather than any routing/URL changes.
+function setupDeviceScreens() {
+  const screenEl = document.getElementById('deviceScreen');
+  if (!screenEl) return;
+
+  const screens = Array.from(screenEl.querySelectorAll('.app-screen'));
+
+  function show(name) {
+    screens.forEach((s) => s.classList.toggle('active', s.dataset.screen === name));
+  }
+
+  screenEl.querySelectorAll('[data-open]').forEach((btn) => {
+    btn.addEventListener('click', () => show(btn.dataset.open));
+  });
+  screenEl.querySelectorAll('[data-back]').forEach((btn) => {
+    btn.addEventListener('click', () => show('home'));
+  });
+  screenEl.querySelectorAll('[data-back-to]').forEach((btn) => {
+    btn.addEventListener('click', () => show(btn.dataset.backTo));
+  });
+
+  show('home');
+
+  const clockEl = document.getElementById('clockReadout');
+  if (clockEl) {
+    const tick = () => {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+}
+
+// ===================== Tools: coin flip =====================
+function setupCoinFlip() {
+  const btn = document.getElementById('coinFlipBtn');
+  const face = document.getElementById('coinFace');
+  if (!btn || !face) return;
+
+  btn.addEventListener('click', () => {
+    const result = Math.random() < 0.5 ? 'HEADS' : 'TAILS';
+    face.classList.remove('flipping');
+    void face.offsetWidth; // restart the CSS animation
+    face.classList.add('flipping');
+    setTimeout(() => { face.textContent = result; }, 250);
+  });
+}
+
+// ===================== Tools: tarot draw =====================
+// 22 Major Arcana, own no-repeat shuffled deck (Fisher-Yates), reshuffled
+// once exhausted -- mirrors the "persisted shuffle deck" behavior described
+// on the device, minus actual flash persistence (this is a browser demo).
+const TAROT_DECK = [
+  ['0 — THE FOOL', 'New beginnings. A leap taken without knowing the whole path.'],
+  ['I — THE MAGICIAN', 'Willpower and resourcefulness. The tools are already at hand.'],
+  ['II — THE HIGH PRIESTESS', 'Intuition over evidence. Something is still hidden.'],
+  ['III — THE EMPRESS', 'Growth and abundance. Nurture what you started.'],
+  ['IV — THE EMPEROR', 'Structure and authority. Discipline holds the line.'],
+  ['V — THE HIEROPHANT', 'Tradition and guidance. Learn the established way first.'],
+  ['VI — THE LOVERS', 'A meaningful choice. Values tested against desire.'],
+  ['VII — THE CHARIOT', 'Willpower in motion. Hold two forces on one course.'],
+  ['VIII — STRENGTH', 'Quiet courage. Patience wins over force.'],
+  ['IX — THE HERMIT', 'Withdrawal for clarity. The answer is internal.'],
+  ['X — WHEEL OF FORTUNE', 'A turning point. Change arrives on its own schedule.'],
+  ['XI — JUSTICE', 'Cause and consequence. Fairness, but no shortcuts.'],
+  ['XII — THE HANGED MAN', 'A forced pause. See it from the other angle.'],
+  ['XIII — DEATH', 'An ending that clears space. Transformation, not literal.'],
+  ['XIV — TEMPERANCE', 'Balance and patience. Blend, don’t force.'],
+  ['XV — THE DEVIL', 'Attachment and restriction. Check what’s actually binding you.'],
+  ['XVI — THE TOWER', 'Sudden collapse of a false structure. Necessary, not fun.'],
+  ['XVII — THE STAR', 'Quiet hope after the storm. Renewal, not resolution yet.'],
+  ['XVIII — THE MOON', 'Uncertainty and illusion. Trust instinct over appearances.'],
+  ['XIX — THE SUN', 'Clarity and success. What was hidden is now obvious.'],
+  ['XX — JUDGEMENT', 'A reckoning. Old choices are called up for review.'],
+  ['XXI — THE WORLD', 'Completion. A cycle closes clean.'],
+];
+
+function setupTarot() {
+  const drawBtn = document.getElementById('tarotDrawBtn');
+  const nameEl = document.getElementById('tarotName');
+  const meaningEl = document.getElementById('tarotMeaning');
+  if (!drawBtn || !nameEl || !meaningEl) return;
+
+  let deck = [];
+  function reshuffle() {
+    deck = TAROT_DECK.map((_, i) => i);
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+  }
+  reshuffle();
+
+  drawBtn.addEventListener('click', () => {
+    if (deck.length === 0) reshuffle();
+    const idx = deck.pop();
+    const [name, meaning] = TAROT_DECK[idx];
+    scrambleText(nameEl, name);
+    meaningEl.textContent = meaning;
+  });
+}
+
+// ===================== Tools: 8-ball oracle =====================
+const EIGHT_BALL_ANSWERS = [
+  'YES — NO HESITATION', 'LEANING YES', 'THE SIGNS AGREE', 'CONFIDENCE: HIGH',
+  'PROCEED', 'THE ODDS FAVOR IT', 'ALL VECTORS ALIGN',
+  'UNCLEAR — RUN IT AGAIN', 'INSUFFICIENT DATA', 'STATIC ON THE LINE', 'RECALCULATING…',
+  'HOLD FOR NOW', 'LEANING NO', 'THE SIGNS DISAGREE', 'CONFIDENCE: LOW',
+  'DO NOT PROCEED', 'THE ODDS ARE AGAINST IT', 'NO VECTORS ALIGN',
+];
+
+function setupEightBall() {
+  const btn = document.getElementById('ballShakeBtn');
+  const answerEl = document.getElementById('ballAnswer');
+  if (!btn || !answerEl) return;
+
+  btn.addEventListener('click', () => {
+    const answer = EIGHT_BALL_ANSWERS[Math.floor(Math.random() * EIGHT_BALL_ANSWERS.length)];
+    scrambleText(answerEl, answer);
+  });
+}
+
+// ===================== Tools: countdown timer =====================
+function setupTimer() {
+  const readout = document.getElementById('timerReadout');
+  const startBtn = document.getElementById('timerStartBtn');
+  const minusBtn = document.getElementById('timerMinus');
+  const plusBtn = document.getElementById('timerPlus');
+  if (!readout || !startBtn || !minusBtn || !plusBtn) return;
+
+  let totalSeconds = 60;
+  let secondsLeft = totalSeconds;
+  let intervalId = null;
+  let running = false;
+
+  const fmt = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  function render() {
+    readout.textContent = fmt(Math.max(secondsLeft, 0));
+    readout.classList.toggle('timer-done', secondsLeft <= 0);
+  }
+
+  function stop() {
+    running = false;
+    if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    startBtn.textContent = 'START';
+  }
+
+  function start() {
+    running = true;
+    startBtn.textContent = 'STOP';
+    intervalId = setInterval(() => {
+      secondsLeft--;
+      render();
+      if (secondsLeft <= 0) stop();
+    }, 1000);
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (running) { stop(); return; }
+    if (secondsLeft <= 0) secondsLeft = totalSeconds;
+    start();
+  });
+
+  minusBtn.addEventListener('click', () => {
+    if (running) return;
+    totalSeconds = Math.max(15, totalSeconds - 15);
+    secondsLeft = totalSeconds;
+    render();
+  });
+
+  plusBtn.addEventListener('click', () => {
+    if (running) return;
+    totalSeconds = Math.min(600, totalSeconds + 15);
+    secondsLeft = totalSeconds;
+    render();
+  });
+
+  render();
+}
+
+// ===================== Tools: word / callsign generator =====================
+const WORDGEN_A = ['GHOST', 'NULL', 'CIPHER', 'VOID', 'ECHO', 'ROGUE', 'ZERO', 'ONYX', 'ASH', 'NEON', 'GRIM', 'WIRE', 'FERAL', 'QUIET', 'BROKEN', 'RUST', 'PALE', 'LOST', 'COLD', 'SHARP'];
+const WORDGEN_B = ['PROTOCOL', 'SIGNAL', 'VECTOR', 'WOLF', 'CIRCUIT', 'SHADOW', 'GRID', 'KEY', 'FRAME', 'PULSE', 'RUNNER', 'DRIVE', 'NODE', 'FRACTURE', 'HORIZON', 'ENGINE', 'RELAY', 'WATCH'];
+
+function setupWordGen() {
+  const btn = document.getElementById('wordgenBtn');
+  const out = document.getElementById('wordgenOutput');
+  if (!btn || !out) return;
+
+  btn.addEventListener('click', () => {
+    const a = WORDGEN_A[Math.floor(Math.random() * WORDGEN_A.length)];
+    const b = WORDGEN_B[Math.floor(Math.random() * WORDGEN_B.length)];
+    const n = Math.floor(Math.random() * 90) + 10;
+    scrambleText(out, `${a}_${b}_${n}`);
+  });
+}
+
+// ===================== Tools: Caesar cipher =====================
+function caesarShift(text, shift) {
+  const s = ((shift % 26) + 26) % 26;
+  return text.replace(/[a-zA-Z]/g, (ch) => {
+    const base = ch <= 'Z' ? 65 : 97;
+    return String.fromCharCode(((ch.charCodeAt(0) - base + s) % 26) + base);
+  });
+}
+
+function setupCipher() {
+  const input = document.getElementById('cipherInput');
+  const output = document.getElementById('cipherOutput');
+  const shiftVal = document.getElementById('cipherShiftVal');
+  const minusBtn = document.getElementById('cipherShiftMinus');
+  const plusBtn = document.getElementById('cipherShiftPlus');
+  if (!input || !output || !shiftVal || !minusBtn || !plusBtn) return;
+
+  let shift = 3;
+
+  function render() {
+    shiftVal.textContent = `SHIFT ${shift}`;
+    const text = (input.value || 'THIS IS A TEST').toUpperCase();
+    output.textContent = caesarShift(text, shift);
+  }
+
+  input.addEventListener('input', render);
+  minusBtn.addEventListener('click', () => { shift = Math.max(1, shift - 1); render(); });
+  plusBtn.addEventListener('click', () => { shift = Math.min(25, shift + 1); render(); });
+
+  render();
+}
+
+// ===================== Recon: simulated WiFi / BLE / BT scan =====================
+// Browsers have no access to real radios, so this is explicitly a mock --
+// plausible names and RSSI values, with a couple of BLE entries flagged the
+// way the real firmware's AirTag/Tile pattern match would flag them.
+const RECON_WIFI_NAMES = ['NETGEAR-5G', 'xfinitywifi', 'HomeNet_24', 'ATT-WIFI-8842', 'Pixel_7_Hotspot', 'TP-LINK_9F3A', 'eduroam', 'FBI Surveillance Van', 'Skynet_Guest', 'CenturyLink0091'];
+const RECON_BLE_NAMES = ['AirPods Pro', 'Galaxy Watch5', 'Unknown BLE Device', 'JBL Flip 6', 'Tile Mate', 'AirTag', 'Fitbit Charge 6', 'ESP32_DEV', 'Unknown BLE Device', 'Nest Mini'];
+const RECON_BT_NAMES = ['Car Audio System', 'Bose QC45', 'Unknown Device', 'Keyboard K380', 'Wireless Mouse', 'PS5 Controller', 'Unknown Device', 'SoundLink Mini'];
+const RECON_FLAGGED = { ble: ['AirTag', 'Tile Mate'] };
+
+function randRssi() {
+  return -Math.floor(Math.random() * 65 + 30); // -30 to -95 dBm
+}
+
+function rssiBars(rssi) {
+  const strength = rssi > -55 ? 4 : rssi > -67 ? 3 : rssi > -80 ? 2 : 1;
+  let html = '';
+  for (let i = 1; i <= 4; i++) {
+    html += `<span class="${i <= strength ? 'on' : ''}" style="height:${3 + i * 2}px"></span>`;
+  }
+  return html;
+}
+
+function setupRecon() {
+  const tabs = Array.from(document.querySelectorAll('.recon-tab'));
+  const listEl = document.getElementById('reconList');
+  const scanBtn = document.getElementById('reconScanBtn');
+  if (!tabs.length || !listEl || !scanBtn) return;
+
+  const pools = { wifi: RECON_WIFI_NAMES, ble: RECON_BLE_NAMES, bt: RECON_BT_NAMES };
+  let activeTab = 'wifi';
+  let scanning = false;
+
+  function renderEmpty() {
+    listEl.innerHTML = '<p class="recon-empty">NO SCAN RUN YET</p>';
+  }
+
+  function runScan() {
+    if (scanning) return;
+    scanning = true;
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'SCANNING…';
+    listEl.innerHTML = '<p class="recon-empty">SCANNING…</p>';
+
+    setTimeout(() => {
+      const pool = pools[activeTab];
+      const count = Math.floor(Math.random() * 4) + 4;
+      const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+      listEl.innerHTML = picks.map((name) => {
+        const rssi = randRssi();
+        const isFlagged = (RECON_FLAGGED[activeTab] || []).includes(name);
+        return `<div class="recon-row${isFlagged ? ' flagged' : ''}">
+          <span class="recon-row-name">${isFlagged ? '⚠ ' : ''}${name}</span>
+          <span class="recon-bars">${rssiBars(rssi)}</span>
+          <span>${rssi}dBm</span>
+        </div>`;
+      }).join('');
+      scanning = false;
+      scanBtn.disabled = false;
+      scanBtn.textContent = 'SCAN';
+    }, 1400);
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.toggle('active', t === tab));
+      activeTab = tab.dataset.recon;
+      renderEmpty();
+    });
+  });
+
+  scanBtn.addEventListener('click', runScan);
+  renderEmpty();
+}
+
+// ===================== Lyrics viewer (placeholder catalogue) =====================
+// No real song text has been supplied yet -- this holds the place with
+// clearly-labeled sample content so the UI/effects are real even though the
+// words aren't. Swap PLACEHOLDER_SONGS for real tracks later.
+const PLACEHOLDER_SONGS = [
+  {
+    title: 'TRACK 01 — UNTITLED',
+    meta: 'PLACEHOLDER · FX: GLITCH',
+    fx: 'fx-glitch',
+    text: '[VERSE 1 — PLACEHOLDER]\nReal lyrics go here once written.\nThis viewer renders whatever text\nis loaded into the catalogue.\n\n[CHORUS — PLACEHOLDER]\nSwap this block for the actual track\nand the scramble-reveal effect\nruns on it exactly the same way.',
+  },
+  {
+    title: 'TRACK 02 — UNTITLED',
+    meta: 'PLACEHOLDER · FX: FLICKER',
+    fx: 'fx-flicker',
+    text: '[VERSE 1 — PLACEHOLDER]\nSample text standing in\nfor a second track slot.\n\n[VERSE 2 — PLACEHOLDER]\nEach catalogue entry carries\nits own effect flag, ready\nfor real content to drop in.',
+  },
+  {
+    title: 'TRACK 03 — UNTITLED',
+    meta: 'PLACEHOLDER · FX: NONE',
+    fx: '',
+    text: '[VERSE 1 — PLACEHOLDER]\nNo effect on this one —\nplain scramble-reveal only.\n\nThird slot, same structure,\nready for real lyrics later.',
+  },
+];
+
+function setupLyrics() {
+  const listEl = document.getElementById('lyricsSongList');
+  const bodyEl = document.getElementById('lyricsBody');
+  const titleEl = document.getElementById('lyricsSongTitle');
+  const textEl = document.getElementById('lyricsText');
+  const backBtn = document.getElementById('lyricsBackToList');
+  if (!listEl || !bodyEl || !titleEl || !textEl || !backBtn) return;
+
+  listEl.innerHTML = PLACEHOLDER_SONGS.map((song, i) =>
+    `<button type="button" class="lyrics-song-row" data-song="${i}">${song.title}<span>${song.meta}</span></button>`
+  ).join('');
+
+  listEl.querySelectorAll('[data-song]').forEach((row) => {
+    row.addEventListener('click', () => {
+      const song = PLACEHOLDER_SONGS[Number(row.dataset.song)];
+      titleEl.textContent = song.title;
+      textEl.className = 'lyrics-text' + (song.fx ? ` ${song.fx}` : '');
+      textEl.textContent = '';
+      scrambleText(textEl, song.text);
+      listEl.classList.add('hidden');
+      bodyEl.classList.remove('hidden');
+    });
+  });
+
+  backBtn.addEventListener('click', () => {
+    bodyEl.classList.add('hidden');
+    listEl.classList.remove('hidden');
+  });
+}
+
 function setupPrescriptDemo() {
   const device = document.getElementById('demoDevice');
   if (!device) return;
@@ -1608,6 +1978,15 @@ document.addEventListener('DOMContentLoaded', () => {
   setupGithubStats();
   setupEmailReveal();
   setActiveNavByPage();
+  setupDeviceScreens();
   setupPrescriptDemo();
+  setupCoinFlip();
+  setupTarot();
+  setupEightBall();
+  setupTimer();
+  setupWordGen();
+  setupCipher();
+  setupRecon();
+  setupLyrics();
   setupFooterYear();
 });

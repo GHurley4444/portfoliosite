@@ -104,26 +104,145 @@
       </div>
 
       <div class="case-section accent-cyan reveal">
-        <h2>Try the Prescript Engine</h2>
+        <h2>Try the Beeper</h2>
         <div class="case-grid case-grid-demo">
           <div class="project-visual">
             <div class="device device-demo" id="demoDevice">
               <div class="device-notch"></div>
-              <div class="device-screen">
-                <div class="prescript-header">
-                  <span class="prescript-label" id="demoLabel">GAME</span>
-                  <span class="prescript-diff" id="demoDiff">[EASY 0]</span>
+              <div class="device-screen" id="deviceScreen">
+
+                <div class="app-screen active" data-screen="home" id="screenHome">
+                  <div class="prescript-header">
+                    <span class="prescript-label">BEEPER</span>
+                    <span class="prescript-diff" id="clockReadout">00:00:00</span>
+                  </div>
+                  <div class="app-grid">
+                    <button type="button" class="app-icon" data-open="prescript"><span class="app-icon-glyph">&#9673;</span>PRESCRIPT</button>
+                    <button type="button" class="app-icon" data-open="recon"><span class="app-icon-glyph">&#9678;</span>RECON</button>
+                    <button type="button" class="app-icon" data-open="tools"><span class="app-icon-glyph">&#9635;</span>TOOLS</button>
+                    <button type="button" class="app-icon" data-open="lyrics"><span class="app-icon-glyph">&#9834;</span>LYRICS</button>
+                  </div>
+                  <div class="device-footer-hint">TAP AN APP TO OPEN</div>
                 </div>
-                <div class="prescript-streak" id="demoStreak">s:0</div>
-                <div class="prescript-text" id="demoText">KILL 5 ENEMIES</div>
-                <div class="prescript-swipe">
-                  <button type="button" id="demoPrev">&lt; TIMED</button>
-                  <button type="button" id="demoNext">CITY &gt;</button>
+
+                <div class="app-screen" data-screen="prescript" id="screenPrescript">
+                  <div class="app-topbar">
+                    <button type="button" class="app-back" data-back>&lt; HOME</button>
+                    <span class="app-topbar-title">PRESCRIPT</span>
+                  </div>
+                  <div class="prescript-header">
+                    <span class="prescript-label" id="demoLabel">GAME</span>
+                    <span class="prescript-diff" id="demoDiff">[EASY 0]</span>
+                  </div>
+                  <div class="prescript-streak" id="demoStreak">s:0</div>
+                  <div class="prescript-text" id="demoText">KILL 5 ENEMIES</div>
+                  <div class="prescript-swipe">
+                    <button type="button" id="demoPrev">&lt; TIMED</button>
+                    <button type="button" id="demoNext">CITY &gt;</button>
+                  </div>
+                  <div class="prescript-actions">
+                    <button type="button" class="pass" id="demoPass">PASS</button>
+                    <button type="button" class="fail" id="demoFail">FAIL</button>
+                  </div>
                 </div>
-                <div class="prescript-actions">
-                  <button type="button" class="pass" id="demoPass">PASS</button>
-                  <button type="button" class="fail" id="demoFail">FAIL</button>
+
+                <div class="app-screen" data-screen="tools" id="screenTools">
+                  <div class="app-topbar">
+                    <button type="button" class="app-back" data-back>&lt; HOME</button>
+                    <span class="app-topbar-title">TOOLS</span>
+                  </div>
+                  <div class="app-grid app-grid-tools">
+                    <button type="button" class="app-icon" data-open="tool-coin">COIN</button>
+                    <button type="button" class="app-icon" data-open="tool-tarot">TAROT</button>
+                    <button type="button" class="app-icon" data-open="tool-8ball">8-BALL</button>
+                    <button type="button" class="app-icon" data-open="tool-timer">TIMER</button>
+                    <button type="button" class="app-icon" data-open="tool-wordgen">WORDGEN</button>
+                    <button type="button" class="app-icon" data-open="tool-cipher">CIPHER</button>
+                  </div>
                 </div>
+
+                <div class="app-screen" data-screen="tool-coin" id="screenCoin">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back-to="tools">&lt; TOOLS</button><span class="app-topbar-title">COIN FLIP</span></div>
+                  <div class="tool-body tool-center">
+                    <div class="coin-face" id="coinFace">HEADS</div>
+                    <button type="button" class="tool-btn" id="coinFlipBtn">FLIP</button>
+                  </div>
+                </div>
+
+                <div class="app-screen" data-screen="tool-tarot" id="screenTarot">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back-to="tools">&lt; TOOLS</button><span class="app-topbar-title">TAROT</span></div>
+                  <div class="tool-body tool-center">
+                    <div class="tarot-card" id="tarotCard">
+                      <div class="tarot-name" id="tarotName">DRAW A CARD</div>
+                      <div class="tarot-meaning" id="tarotMeaning">&nbsp;</div>
+                    </div>
+                    <button type="button" class="tool-btn" id="tarotDrawBtn">DRAW</button>
+                  </div>
+                </div>
+
+                <div class="app-screen" data-screen="tool-8ball" id="screen8Ball">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back-to="tools">&lt; TOOLS</button><span class="app-topbar-title">8-BALL</span></div>
+                  <div class="tool-body tool-center">
+                    <div class="tool-answer" id="ballAnswer">ASK, THEN SHAKE</div>
+                    <button type="button" class="tool-btn" id="ballShakeBtn">SHAKE</button>
+                  </div>
+                </div>
+
+                <div class="app-screen" data-screen="tool-timer" id="screenTimer">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back-to="tools">&lt; TOOLS</button><span class="app-topbar-title">TIMER</span></div>
+                  <div class="tool-body tool-center">
+                    <div class="timer-readout" id="timerReadout">01:00</div>
+                    <div class="timer-controls">
+                      <button type="button" class="tool-btn-sm" id="timerMinus">&minus;15s</button>
+                      <button type="button" class="tool-btn" id="timerStartBtn">START</button>
+                      <button type="button" class="tool-btn-sm" id="timerPlus">+15s</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="app-screen" data-screen="tool-wordgen" id="screenWordgen">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back-to="tools">&lt; TOOLS</button><span class="app-topbar-title">WORD GEN</span></div>
+                  <div class="tool-body tool-center">
+                    <div class="tool-answer" id="wordgenOutput">TAP GENERATE</div>
+                    <button type="button" class="tool-btn" id="wordgenBtn">GENERATE</button>
+                  </div>
+                </div>
+
+                <div class="app-screen" data-screen="tool-cipher" id="screenCipher">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back-to="tools">&lt; TOOLS</button><span class="app-topbar-title">CIPHER</span></div>
+                  <div class="tool-body">
+                    <textarea class="cipher-input" id="cipherInput" rows="2" maxlength="140" placeholder="TYPE A MESSAGE..."></textarea>
+                    <div class="cipher-shift-row">
+                      <button type="button" class="tool-btn-sm" id="cipherShiftMinus">&minus;</button>
+                      <span class="cipher-shift-readout" id="cipherShiftVal">SHIFT 3</span>
+                      <button type="button" class="tool-btn-sm" id="cipherShiftPlus">+</button>
+                    </div>
+                    <div class="cipher-output" id="cipherOutput">WKLV LV D WHVW</div>
+                  </div>
+                </div>
+
+                <div class="app-screen" data-screen="recon" id="screenRecon">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back>&lt; HOME</button><span class="app-topbar-title">RECON</span></div>
+                  <div class="recon-tabs">
+                    <button type="button" class="recon-tab active" data-recon="wifi">WIFI</button>
+                    <button type="button" class="recon-tab" data-recon="ble">BLE</button>
+                    <button type="button" class="recon-tab" data-recon="bt">BT</button>
+                  </div>
+                  <div class="recon-list" id="reconList"></div>
+                  <button type="button" class="tool-btn tool-btn-full" id="reconScanBtn">SCAN</button>
+                  <p class="recon-disclaimer">SIMULATED &mdash; BROWSERS CAN'T ACCESS REAL RADIOS</p>
+                </div>
+
+                <div class="app-screen" data-screen="lyrics" id="screenLyrics">
+                  <div class="app-topbar"><button type="button" class="app-back" data-back>&lt; HOME</button><span class="app-topbar-title">LYRICS</span></div>
+                  <div class="lyrics-song-list" id="lyricsSongList"></div>
+                  <div class="lyrics-body hidden" id="lyricsBody">
+                    <button type="button" class="app-back" id="lyricsBackToList">&lt; SONGS</button>
+                    <div class="lyrics-song-title" id="lyricsSongTitle"></div>
+                    <div class="lyrics-text" id="lyricsText"></div>
+                  </div>
+                </div>
+
               </div>
               <div class="device-speaker-grille">
                 <span></span><span></span><span></span><span></span><span></span>
@@ -132,8 +251,8 @@
           </div>
           <div>
             <p class="demo-live-tag"><span class="demo-live-dot"></span> LIVE DEMO &mdash; RUNS IN YOUR BROWSER</p>
-            <p>Every prescript string here is copied straight out of <code>beeper.ino</code>'s own <code>easy*</code>, <code>*Prescripts</code>, <code>hard*</code>, and <code>rare*</code> pools &mdash; nothing written for the site. GAME, CON, and TASK issue short all-caps directives; CITY keeps the Index's original sentence-style phrasing.</p>
-            <p>Use the arrows to swipe between categories, the way the device's touchscreen carousel works. Hit PASS or FAIL to draw the next prescript &mdash; two PASSes in a row bump the difficulty tier, one FAIL drops it back to Easy. TIMED pulls from each category's rare pool and runs on a live countdown, same as the on-device timer menu.</p>
+            <p>This is a browser recreation of the device's own menu system &mdash; PRESCRIPT, RECON, TOOLS, and LYRICS, navigated the same way the touchscreen carousel works on hardware. Every prescript string is copied straight out of <code>beeper.ino</code>'s own <code>easy*</code>, <code>*Prescripts</code>, <code>hard*</code>, and <code>rare*</code> pools &mdash; nothing written for the site.</p>
+            <p>PRESCRIPT: swipe between categories, PASS/FAIL to draw the next task &mdash; two PASSes bump the difficulty tier, one FAIL drops it to Easy. RECON simulates the device's WiFi/BLE/BT scanners with plausible mock results (no real radio access from a browser). TOOLS bundles the coin flip, tarot draw, 8-ball, countdown timer, word generator, and Caesar cipher. LYRICS is a placeholder catalogue until the real track text goes in.</p>
           </div>
         </div>
       </div>
