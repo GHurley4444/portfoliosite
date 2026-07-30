@@ -106,14 +106,16 @@ function startMiniTronPreview(canvas) {
 }
 
 // ===================== Arcade intro sequence =====================
-// Replaces the old typed-out fake boot log: an arcade cabinet holds the
-// mini preview above for a beat, then the cabinet scales up (CSS
-// transition) centered exactly on the screen -- transform-origin is
-// computed here from the screen's real bounding box -- while the bezel/
-// marquee/panel fade out, reading as diving through the screen. The real
-// site has been sitting rendered underneath the whole time; the overlay
-// just fades away at the end to reveal it. Total: ~1.4s preview + 1s zoom
-// + 0.6s fade, roughly the "three seconds" this was asked for.
+// Replaces the old typed-out fake boot log with three beats:
+//   1. Arcade cabinet appears, a tiny live Tron preview plays on its screen.
+//   2. That preview cross-fades into a small mockup of the site itself
+//      (same fonts/gradient/logo, not a live copy -- see arcadeSitePreview
+//      comment below) -- reads as "the site loading up" on the screen.
+//   3. The cabinet scales up -- by a precisely computed factor so the
+//      screen grows to exactly cover the real viewport, not a guessed
+//      constant -- while the overlay fades concurrently, so the real site
+//      becomes visible through the screen as it grows, like walking
+//      through it, landing on the actual full-size page.
 function runIntroSequence() {
   const overlay = document.getElementById('introOverlay');
   const canvas = document.getElementById('introCanvas');
@@ -121,6 +123,7 @@ function runIntroSequence() {
   const screenEl = document.getElementById('arcadeScreen');
   const skipBtn = document.getElementById('introSkip');
   const label = document.getElementById('introLabel');
+  const sitePreview = document.getElementById('arcadeSitePreview');
   if (!overlay || !canvas || !cabinet || !screenEl || !skipBtn) return;
 
   let seen = null;
@@ -136,11 +139,19 @@ function runIntroSequence() {
     stopPreview = startMiniTronPreview(canvas);
   });
 
+  let sitePreviewShown = false;
+  function showSitePreview() {
+    if (sitePreviewShown) return;
+    sitePreviewShown = true;
+    if (label) label.classList.add('hidden');
+    if (sitePreview) sitePreview.classList.add('visible');
+  }
+
   let finished = false;
   function zoomIn() {
     if (finished) return;
     finished = true;
-    if (label) label.classList.add('hidden');
+    showSitePreview(); // in case this fires early via skip/keydown
     window.removeEventListener('keydown', onKey);
     skipBtn.removeEventListener('click', zoomIn);
 
@@ -149,6 +160,16 @@ function runIntroSequence() {
     const originX = ((screenRect.left + screenRect.width / 2 - cabinetRect.left) / cabinetRect.width) * 100;
     const originY = ((screenRect.top + screenRect.height / 2 - cabinetRect.top) / cabinetRect.height) * 100;
     cabinet.style.transformOrigin = `${originX}% ${originY}%`;
+
+    // How much the cabinet needs to scale so the screen's real on-screen
+    // rect grows to fully cover the actual viewport -- computed fresh
+    // each time instead of a guessed constant, so this holds up at any
+    // window size. clientWidth/clientHeight (not innerWidth/innerHeight)
+    // to stay consistent with the scrollbar fix in the grid engine.
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const scaleNeeded = Math.max(vw / screenRect.width, vh / screenRect.height) * 1.08;
+    cabinet.style.setProperty('--zoom-scale', scaleNeeded);
 
     // Start the cabinet scaling up AND the overlay fading out at the same
     // moment, instead of one after the other -- the site needs to become
@@ -169,7 +190,8 @@ function runIntroSequence() {
   skipBtn.addEventListener('click', zoomIn);
 
   setTimeout(() => skipBtn.classList.add('visible'), 500);
-  setTimeout(zoomIn, 1800);
+  setTimeout(showSitePreview, 1200); // phase 2: Tron preview -> site mockup
+  setTimeout(zoomIn, 2100); // phase 3: zoom through the screen
 }
 
 // ===================== Hero eyebrow typewriter =====================

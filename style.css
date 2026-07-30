@@ -290,7 +290,10 @@ body.custom-cursor-active button {
 }
 
 .intro-overlay.zooming .arcade-cabinet {
-  transform: scale(16);
+  /* --zoom-scale is computed in JS from the screen's actual on-screen
+     size vs. the real viewport, so the screen grows to precisely cover
+     it regardless of display size -- 16 is just a sane fallback. */
+  transform: scale(var(--zoom-scale, 16));
 }
 
 .arcade-marquee {
@@ -333,6 +336,79 @@ body.custom-cursor-active button {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+/* A small, lightweight stand-in for the real site (same fonts/gradient/
+   palette, none of the real page's weight) that cross-fades in over the
+   mini Tron preview -- reads as "the site loading up" on the arcade
+   screen before the zoom carries it into the real thing. Deliberately
+   not a live iframe of the actual page: that would mean a second full
+   copy of every script running (including its own background engine)
+   just for a two-second decorative beat, working against everything
+   already done to keep the page light. */
+.arcade-site-preview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  padding: 8% 6% 0;
+}
+.arcade-site-preview.visible { opacity: 1; }
+
+.mini-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: auto;
+}
+.mini-logo {
+  font-family: var(--font-mono);
+  font-size: 0.42rem;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  text-shadow: var(--glow-sm);
+}
+.mini-nav { display: flex; gap: 4px; }
+.mini-nav span {
+  width: 6px; height: 2px;
+  background: var(--text-dim);
+}
+
+.mini-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: auto 0;
+  gap: 4px;
+}
+.mini-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.32rem;
+  letter-spacing: 0.2em;
+  color: var(--cyan-soft);
+  text-shadow: var(--glow-sm);
+}
+.mini-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.85rem;
+  line-height: 1.05;
+  background: linear-gradient(100deg, var(--cyan) 0%, var(--blue) 35%, var(--violet) 60%, var(--amber) 85%, var(--cyan) 100%);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: heroGradient 6s ease-in-out infinite;
+}
+.mini-tagline {
+  font-family: var(--font-mono);
+  font-size: 0.3rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
 }
 
 .arcade-screen-label {
