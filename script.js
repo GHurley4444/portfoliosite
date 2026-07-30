@@ -356,14 +356,23 @@ function createGridEngine() {
   }
 
   function resize() {
+    // window.innerWidth/innerHeight include the scrollbar's own width when
+    // one is rendered, so sizing the canvas off those numbers made it
+    // consistently wider/taller than the actual visible content area
+    // whenever a scrollbar showed up -- pushing part of the grid (and any
+    // bot that wandered into it) behind/off past the scrollbar. clientWidth/
+    // clientHeight on the root element exclude the scrollbar, so the canvas
+    // now always matches exactly what's actually visible.
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
     dpr = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
+    canvas.width = viewportWidth * dpr;
+    canvas.height = viewportHeight * dpr;
+    canvas.style.width = `${viewportWidth}px`;
+    canvas.style.height = `${viewportHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.ceil(window.innerWidth / CELL);
-    rows = Math.ceil(window.innerHeight / CELL);
+    cols = Math.ceil(viewportWidth / CELL);
+    rows = Math.ceil(viewportHeight / CELL);
   }
 
   function startAmbientRound() {
@@ -687,7 +696,7 @@ function createGridEngine() {
   }
 
   function draw() {
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    ctx.clearRect(0, 0, document.documentElement.clientWidth, document.documentElement.clientHeight);
     bots.forEach(drawTrail);
     bots.forEach(drawHead);
     const now = performance.now();
