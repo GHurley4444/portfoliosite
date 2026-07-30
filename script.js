@@ -741,17 +741,35 @@ function createGridEngine() {
     const aggressionScale = inDanger ? ESCAPE_AGGRESSION_CUT : 1;
     const safeSpaceFloor = DANGER_SPACE_THRESHOLD * bot.dangerMultiplier;
 
-    // Naive one-tick lookahead for every other rider, assuming they keep
-    // going straight. Not always true, but it's what a real player reads
-    // off an opponent's heading — enough to flinch away from a cell two
-    // bots are both about to plow into instead of only noticing after
-    // they're both dead. Cautious personalities weigh this heavily;
-    // reckless ones (high aggression) still shrug and take the trade.
+    // One-tick lookahead for every other rider. The baseline guess is that
+    // they keep going straight -- not always true, but it's what a real
+    // player reads off an opponent's heading. On its own, though, that
+    // assumption is exactly what let two bots blindside each other: once
+    // KILL_OPPORTUNITY_BONUS gives both of them a reason to turn *toward*
+    // each other in the same tick, "assume they go straight" no longer
+    // covers the cell they're actually about to land on, so neither bot's
+    // headOnRisk check ever fires and they collide without either side
+    // having "seen it coming." For any opponent genuinely close enough for
+    // a mutual chase to be plausible, also flag the cell that steps them
+    // one closer to *this* bot on each axis -- covering the "they might
+    // turn toward me" case the straight-line guess misses. Cautious
+    // personalities weigh all of this heavily; reckless ones (high
+    // aggression) still shrug and take the trade.
     const incoming = alive
       .filter((o) => o !== bot)
-      .map((o) => {
+      .flatMap((o) => {
+        const cells = [];
         const d = DIRS[o.dir];
-        return { x: o.x + d.x, y: o.y + d.y };
+        cells.push({ x: o.x + d.x, y: o.y + d.y });
+
+        const rawDist = Math.abs(o.x - bot.x) + Math.abs(o.y - bot.y);
+        if (rawDist <= KILL_OPPORTUNITY_RANGE) {
+          const towardX = Math.sign(bot.x - o.x);
+          const towardY = Math.sign(bot.y - o.y);
+          if (towardX !== 0) cells.push({ x: o.x + towardX, y: o.y });
+          if (towardY !== 0) cells.push({ x: o.x, y: o.y + towardY });
+        }
+        return cells;
       });
 
     const scored = options.map(({ dir, nx, ny, space }) => {
@@ -808,8 +826,8 @@ function createGridEngine() {
     return scored[0].dir;
   }
 
-  function triggerCrash(x, y, color) {
-    effects.push({ x, y, color, start: performance.now() });
+  function triggerCrash(x, y, color, hit) {
+    effects.push({ x, y, color, start: performance.now(), hit: hit || null });
   }
 
   function resolveTick() {
@@ -846,14 +864,32 @@ function createGridEngine() {
     });
 
     moves.forEach((m) => {
-      const dead =
-        !inBounds(m.nx, m.ny) ||
-        (grid[m.ny] && grid[m.ny][m.nx]) ||
-        moves.some((other) => other !== m && other.nx === m.nx && other.ny === m.ny);
+      const outOfBounds = !inBounds(m.nx, m.ny);
+      const occupiedId = !outOfBounds && grid[m.ny] && grid[m.ny][m.nx] ? grid[m.ny][m.nx] - 1 : -1;
+      const collidingMove = !outOfBounds
+        ? moves.find((other) => other !== m && other.nx === m.nx && other.ny === m.ny)
+        : null;
+      const dead = outOfBounds || occupiedId !== -1 || !!collidingMove;
 
       if (dead) {
         m.bot.alive = false;
-        triggerCrash(m.bot.x, m.bot.y, m.bot.color);
+
+        // Identify what actually killed this bot so drawEffects() can
+        // flash that exact cell in the color of whatever was really
+        // there. A trail's older segments render at reduced opacity (and
+        // the whole background canvas sits under its own opacity too),
+        // so the fatal line can be hard to spot at a glance even though
+        // the collision is entirely real -- this makes the "what did I
+        // hit" moment legible instead of it just reading as a random death.
+        let hitColor = null;
+        if (occupiedId !== -1) {
+          const hitBot = bots.find((b) => b.id === occupiedId);
+          if (hitBot) hitColor = hitBot.color;
+        } else if (collidingMove) {
+          hitColor = collidingMove.bot.color;
+        }
+        const hit = outOfBounds ? null : { x: m.nx, y: m.ny, color: hitColor };
+        triggerCrash(m.bot.x, m.bot.y, m.bot.color, hit);
         return;
       }
 
@@ -964,6 +1000,7 @@ function createGridEngine() {
 
   function drawEffects(now) {
     const DURATION = 550;
+    const HIT_FLASH_MS = 260; // short and sharp -- long enough to register as "that's what got you", short enough not to linger and look like its own separate thing
     effects = effects.filter((fx) => now - fx.start < DURATION);
     effects.forEach((fx) => {
       const t = (now - fx.start) / DURATION;
@@ -980,6 +1017,22 @@ function createGridEngine() {
       ctx.beginPath();
       ctx.arc(cx, cy, Math.max(6 - t * 6, 0), 0, Math.PI * 2);
       ctx.fill();
+
+      // Briefly flash the actual cell that killed this bot, at full
+      // brightness, in the color of whatever was really there (a wall
+      // crash has no hit color and just skips this). See resolveTick()
+      // for how hit.color is worked out.
+      if (fx.hit && fx.hit.color) {
+        const ht = Math.min(now - fx.start, HIT_FLASH_MS) / HIT_FLASH_MS;
+        const hx = fx.hit.x * CELL + CELL / 2;
+        const hy = fx.hit.y * CELL + CELL / 2;
+        ctx.globalAlpha = 1 - ht;
+        ctx.fillStyle = fx.hit.color;
+        ctx.shadowColor = fx.hit.color;
+        ctx.shadowBlur = 14;
+        ctx.fillRect(hx - CELL * 0.4, hy - CELL * 0.4, CELL * 0.8, CELL * 0.8);
+        ctx.shadowBlur = 0;
+      }
     });
     ctx.globalAlpha = 1;
   }
