@@ -345,12 +345,14 @@ body.custom-cursor-active button {
   will-change: transform;
 }
 
-/* The mini Tron preview / site mockup fade out quickly once the expand
-   starts so they don't visibly stretch as the screen's aspect ratio
-   changes from 4:3 to the viewport's -- leaves a clean glowing panel
-   growing to fill the screen for the rest of the animation. */
+/* The site-mockup preview is deliberately left visible and NOT faded
+   here -- it's the thing that should look like it's expanding onto the
+   screen as the box grows (see zoomIn() in script.js). Only the leftover
+   mini Tron canvas (already fully covered by the mockup, but still
+   technically present underneath) and the screen's CRT label/glare
+   textures fade out, since those read as arcade-screen furniture rather
+   than "the website". */
 .arcade-screen.zoom-expand canvas,
-.arcade-screen.zoom-expand .arcade-site-preview,
 .arcade-screen.zoom-expand .arcade-screen-label,
 .arcade-screen.zoom-expand .arcade-screen-glare {
   transition: opacity 0.4s ease;
