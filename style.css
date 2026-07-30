@@ -103,6 +103,24 @@ a { color: inherit; text-decoration: none; }
   mix-blend-mode: screen;
 }
 
+/* Tron mode: fade the page content itself so the grid battle running
+   behind it is actually visible/playable instead of being hidden behind
+   solid text and panels. Hovering a faded area brings it back to full
+   opacity so it's still readable on demand. Links/buttons stay fully
+   clickable throughout — opacity doesn't touch pointer events. */
+body.bg-lightcycle .site-header,
+body.bg-lightcycle main,
+body.bg-lightcycle .site-footer {
+  opacity: 0.16;
+  transition: opacity 0.4s ease;
+}
+
+body.bg-lightcycle .site-header:hover,
+body.bg-lightcycle main:hover,
+body.bg-lightcycle .site-footer:hover {
+  opacity: 1;
+}
+
 /* ===================== Rotating orbit background (pocketed, unused) ===================== */
 .orbit-bg {
   position: fixed;

@@ -706,6 +706,11 @@ function setupBackgroundToggle() {
       orbitEngine.show();
       btn.setAttribute('aria-pressed', 'false');
     }
+    // Fade the page content itself when Tron mode is on, so the grid
+    // battle underneath is actually visible (and playable) instead of
+    // being hidden behind solid text/panels. Hovering a section brings
+    // it back to full opacity to read it — see the CSS for the transition.
+    document.body.classList.toggle('bg-lightcycle', next === 'lightcycle');
     if (persist) {
       try { localStorage.setItem('bgMode', next); } catch (e) {}
     }
