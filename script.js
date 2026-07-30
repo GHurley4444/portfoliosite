@@ -149,14 +149,19 @@ function runIntroSequence() {
     const originX = ((screenRect.left + screenRect.width / 2 - cabinetRect.left) / cabinetRect.width) * 100;
     const originY = ((screenRect.top + screenRect.height / 2 - cabinetRect.top) / cabinetRect.height) * 100;
     cabinet.style.transformOrigin = `${originX}% ${originY}%`;
-    overlay.classList.add('zooming');
 
-    setTimeout(() => {
-      overlay.classList.add('hidden');
-      if (stopPreview) stopPreview();
-      try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
-      setTimeout(() => overlay.remove(), 650);
-    }, 1000);
+    // Start the cabinet scaling up AND the overlay fading out at the same
+    // moment, instead of one after the other -- the site needs to become
+    // visible THROUGH the growing screen as it happens, not pop in only
+    // after the zoom already finished. The overlay (0.6s fade) resolves
+    // faster than the cabinet scale (1s), so the site is fully interactive
+    // partway through the zoom while the giant, dissolving screen is still
+    // visually finishing its motion on top of it.
+    overlay.classList.add('zooming');
+    overlay.classList.add('hidden');
+    if (stopPreview) stopPreview();
+    try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
+    setTimeout(() => overlay.remove(), 1050);
   }
 
   function onKey() { zoomIn(); }
@@ -164,7 +169,7 @@ function runIntroSequence() {
   skipBtn.addEventListener('click', zoomIn);
 
   setTimeout(() => skipBtn.classList.add('visible'), 500);
-  setTimeout(zoomIn, 1400);
+  setTimeout(zoomIn, 1800);
 }
 
 // ===================== Hero eyebrow typewriter =====================
