@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cybersecurity Capstone // Garrett Hurley</title>
-<meta name="description" content="Towson University Cybersecurity Capstone (TU Case Studies, Team Texas) — a semester-long red/blue exercise across a ~40-VM Proxmox environment: Active Directory builds, offensive operations, and real incident response.">
+<meta name="description" content="Towson University Cybersecurity Capstone (TU Case Studies, Team Texas): a semester-long red/blue exercise across a ~40-VM Proxmox environment, covering Active Directory builds, offensive operations, AI prompt-injection, and real incident response.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
     <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
     <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // CAPSTONE</p>
     <h1 class="page-title" data-scramble-load>Cybersecurity Capstone</h1>
-    <p class="page-desc">Towson University's Case Studies capstone — a semester-long red/blue exercise on a shared Proxmox cluster, with a dedicated Red Team of alumni volunteers attacking continuously throughout the class. As Team Texas, we built and defended roughly 40 VMs across half a dozen Active Directory domains, ran offensive operations against rival teams, and handled real incident response against both the Red Team and everyone else.</p>
+    <p class="page-desc">Towson University's Case Studies capstone (a semester-long red/blue exercise on a shared Proxmox cluster, with a dedicated Red Team of alumni volunteers attacking continuously throughout the class). As Team Texas, we built and defended roughly 40 VMs across half a dozen Active Directory domains, ran offensive operations against rival teams, and handled real incident response against both the Red Team and everyone else.</p>
   </section>
 
   <section class="section">
@@ -52,20 +52,20 @@
 
       <div class="case-section accent-violet reveal">
         <h2>The Exercise</h2>
-        <p>Four student teams &mdash; Texas, California, Florida, and Illinois &mdash; each ran their own slice of a shared Proxmox environment: multiple Active Directory domains, Linux and Windows hosts, web and file services, all wired into a credit economy where system uptime earned currency and currency bought flags. A New Jersey network sat alongside them as an unmanned, teamless environment rather than a fifth competing team. On top of that, a dedicated Red Team of alumni volunteers attacked every student team continuously throughout the semester, alongside whatever offense the other student teams could bring. The exercise ran in Episodes, each closing out with an after-action report; I worked alongside four teammates (J.R., J.M., S.W., and L.S.) as Team Texas.</p>
-        <p>That structure meant the work was never purely offense or purely defense. The same week we were sniffing credentials out of another team's SSH sessions, we were also tracing down how someone had drained our own bank to zero. Both sides of that fed into the other &mdash; understanding how an attacker covers their tracks is exactly what let us catch one doing it to us.</p>
+        <p>Four student teams (Texas, California, Florida, and Illinois) each ran their own slice of a shared Proxmox environment: multiple Active Directory domains, Linux and Windows hosts, web and file services, all wired into a credit economy where system uptime earned currency and currency bought flags. A New Jersey network sat alongside them, but it wasn't a student team at all: the professors used it to host an AI chatbot with access to a hidden bank of network credentials, as a standalone exercise in prompt injection and AI manipulation (more on that under Offensive Operations). On top of everything else, a dedicated Red Team of alumni volunteers attacked every student team continuously throughout the semester, alongside whatever offense the other student teams could bring. The exercise ran in Episodes, each closing out with an after-action report; I worked alongside four teammates (J.R., J.M., S.W., and L.S.) as Team Texas.</p>
+        <p>That structure meant the work was never purely offense or purely defense. The same week we were sniffing credentials out of another team's SSH sessions, we were also tracing down how someone had drained our own bank to zero. Both sides of that fed into the other (understanding how an attacker covers their tracks is exactly what let us catch one doing it to us).</p>
         <div class="evidence-grid">
           <figure class="evidence-frame">
             <a href="assets/capstone-economy-dashboard.png" target="_blank" rel="noopener">
               <img src="assets/capstone-economy-dashboard.png" alt="Team Texas economy dashboard showing a zero balance and a transaction log of uptime-check payouts and a transfer request" loading="lazy">
             </a>
-            <figcaption><strong>CREDIT ECONOMY</strong>The uptime-driven currency system &mdash; balance and transaction log for Team Texas.</figcaption>
+            <figcaption><strong>CREDIT ECONOMY</strong>The uptime-driven currency system (balance and transaction log for Team Texas).</figcaption>
           </figure>
           <figure class="evidence-frame">
             <a href="assets/capstone-flags-share.png" target="_blank" rel="noopener">
               <img src="assets/capstone-flags-share.png" alt="Directory listing of captured flag image files on a Team Texas file share" loading="lazy">
             </a>
-            <figcaption><strong>FLAG SHARE</strong>Captured flags stored on our own share &mdash; what that credit economy was actually buying.</figcaption>
+            <figcaption><strong>FLAG SHARE</strong>Captured flags stored on our own share (what that credit economy was actually buying).</figcaption>
           </figure>
         </div>
       </div>
@@ -76,12 +76,12 @@
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9673;</span>
             <h3>Active Directory Domains</h3>
-            <p>Stood up the Textile subdomain from scratch &mdash; a new forest, a Windows Server 2022 domain controller at Lewisville, DNS zones configured and verified, then joined additional hosts as IIS web servers.</p>
+            <p>Stood up the Textile subdomain from scratch (new forest, a Windows Server 2022 domain controller at Lewisville, DNS zones configured and verified), then joined additional hosts as IIS web servers.</p>
           </div>
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9678;</span>
             <h3>Segmented Firewall</h3>
-            <p>Built a new domain behind an IPFire firewall using a GREEN/ORANGE/RED design &mdash; internal network, DMZ, and external &mdash; with a domain controller, workstation, and MySQL server inside GREEN, and DNS/Apache exposed in ORANGE.</p>
+            <p>Built a new domain behind an IPFire firewall using a GREEN/ORANGE/RED design (internal network, DMZ, and external), with a domain controller, workstation, and MySQL server inside GREEN, and DNS/Apache exposed in ORANGE.</p>
           </div>
           <div class="feature-card accent-amber">
             <span class="feature-icon">&#9635;</span>
@@ -91,12 +91,12 @@
           <div class="feature-card accent-blue">
             <span class="feature-icon">&#9889;</span>
             <h3>Internal PKI / HTTPS</h3>
-            <p>Stood up our own Certificate Authority to sign CSRs from every Apache host, then distributed the CA cert for the fleet to trust &mdash; every internal service running real HTTPS instead of self-signed warnings.</p>
+            <p>Stood up our own Certificate Authority to sign CSRs from every Apache host, then distributed the CA cert for the fleet to trust (every internal service running real HTTPS instead of self-signed warnings).</p>
           </div>
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9679;</span>
             <h3>SIEM Operations</h3>
-            <p>Ran Graylog as the team's central log pipeline &mdash; used it to catch active intrusions, and rebuilt it more than once after it became a target itself.</p>
+            <p>Ran Graylog as the team's central log pipeline, using it to catch active intrusions, and rebuilt it more than once after it became a target itself.</p>
           </div>
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9673;</span>
@@ -109,7 +109,7 @@
             <a href="assets/capstone-graylog-dashboard.png" target="_blank" rel="noopener">
               <img src="assets/capstone-graylog-dashboard.png" alt="Graylog main dashboard showing total log volume and top log sources across Team Texas hosts" loading="lazy">
             </a>
-            <figcaption><strong>SIEM DASHBOARD</strong>Our Graylog overview &mdash; log volume across the fleet, rebuilt more than once after being targeted directly.</figcaption>
+            <figcaption><strong>SIEM DASHBOARD</strong>Our Graylog overview (log volume across the fleet), rebuilt more than once after being targeted directly.</figcaption>
           </figure>
         </div>
       </div>
@@ -118,30 +118,30 @@
         <h2>Incident Response</h2>
         <p>This is the part of the exercise that mattered most for how I actually think about defense: we weren't hardening a system against a hypothetical, we were responding to real, ongoing intrusions from people actively trying to stay hidden.</p>
         <ul class="spec-list">
-          <li><strong>PERSISTENT PROXY BACKDOOR</strong>Our shared bank balance dropped from over 1,200 credits to zero overnight &mdash; every team got hit the same way, which pointed at the Red Team. Digging through cron jobs and running processes on our proxy turned up unauthorized SSH public keys that a script kept silently re-adding every time we deleted them, plus a Python reverse-shell dropper exfiltrating our bash history and password changes. We rotated the proxy password, removed the persistence script, and started routinely auditing <code>ps aux</code> for anything that didn't belong.</li>
-          <li><strong>DOMAIN CONTROLLER LOSS &amp; REBUILD</strong>A single incident took out half our Steel domain, including both domain controllers and our file server. No recent backups meant a full rebuild from scratch &mdash; which turned into an opportunity, since that domain had been inherited from a previous team with unknown misconfigurations baked in. We rebuilt it deliberately more securely than it started, and came out of it with a much stronger case for regular backups going forward.</li>
+          <li><strong>PERSISTENT PROXY BACKDOOR</strong>Our shared bank balance dropped from over 1,200 credits to zero overnight (every team got hit the same way, which pointed at the Red Team). Digging through cron jobs and running processes on our proxy turned up unauthorized SSH public keys that a script kept silently re-adding every time we deleted them, plus a Python reverse-shell dropper exfiltrating our bash history and password changes. We rotated the proxy password, removed the persistence script, and started routinely auditing <code>ps aux</code> for anything that didn't belong.</li>
+          <li><strong>DOMAIN CONTROLLER LOSS &amp; REBUILD</strong>A single incident took out half our Steel domain, including both domain controllers and our file server. No recent backups meant a full rebuild from scratch (which turned into an opportunity, since that domain had been inherited from a previous team with unknown misconfigurations baked in). We rebuilt it deliberately more securely than it started, and came out of it with a much stronger case for regular backups going forward.</li>
           <li><strong>SPOOFED ACCOUNTS &amp; REVERSE-SHELL CRON</strong>Unauthorized SSH keys kept reappearing on our proxy even after removal, traced to a script (<code>p.sh</code>) that re-added users, reinjected keys into both regular and root accounts, and had modified our PAM stack to quietly log plaintext passwords. A cron job was firing a reverse shell back to an external host every night at 3 AM. We also found a planted account, tied to an attacker alias we'd already seen on a previous incident, sitting in <code>/etc/shadow</code>. Script and account both got pulled, PAM got rebuilt clean.</li>
-          <li><strong>ACTIVE SESSION DETECTION</strong>On two more hosts, we found duplicate SSH keys and foreign entries in <code>known_hosts</code> &mdash; and on one of them, <code>netstat</code> turned up a live external SSH session mid-attack. We killed the session, rotated both root passwords immediately, and cleaned the compromised host state.</li>
-          <li><strong>UNAUTHORIZED SOFTWARE (&quot;DUCK PROGRAM&quot;)</strong>Several Windows hosts started showing animated ducks walking across the screen and random notepad pop-ups &mdash; harmless-looking, but unauthorized and worth taking seriously. Traced it to a modified prankware tool dropped via remote task execution, confirmed no persistence had been left behind using Autoruns, Registry Editor, and PowerShell, then removed it cleanly.</li>
+          <li><strong>ACTIVE SESSION DETECTION</strong>On two more hosts, we found duplicate SSH keys and foreign entries in <code>known_hosts</code>, and on one of them, <code>netstat</code> turned up a live external SSH session mid-attack. We killed the session, rotated both root passwords immediately, and cleaned the compromised host state.</li>
+          <li><strong>UNAUTHORIZED SOFTWARE (&quot;DUCK PROGRAM&quot;)</strong>Several Windows hosts started showing animated ducks walking across the screen and random notepad pop-ups (harmless-looking, but unauthorized and worth taking seriously). Traced it to a modified prankware tool dropped via remote task execution, confirmed no persistence had been left behind using Autoruns, Registry Editor, and PowerShell, then removed it cleanly.</li>
         </ul>
         <div class="evidence-grid">
           <figure class="evidence-frame">
             <a href="assets/capstone-forensic-eventlogs.png" target="_blank" rel="noopener">
               <img src="assets/capstone-forensic-eventlogs.png" alt="Forensic analysis tool showing hundreds of thousands of parsed Windows Security and System event log entries" loading="lazy">
             </a>
-            <figcaption><strong>EVENT LOG TRIAGE</strong>412K+ parsed Windows events during a host investigation &mdash; logon activity, privilege assignment, scheduled tasks.</figcaption>
+            <figcaption><strong>EVENT LOG TRIAGE</strong>412K+ parsed Windows events during a host investigation (logon activity, privilege assignment, scheduled tasks).</figcaption>
           </figure>
           <figure class="evidence-frame">
             <a href="assets/capstone-smb-shares.png" target="_blank" rel="noopener">
               <img src="assets/capstone-smb-shares.png" alt="smbclient session listing Recon, OperationsPlans, IncidentResponse, AfterActionReports, and EpisodeReports directories on a Team Texas share" loading="lazy">
             </a>
-            <figcaption><strong>REPORTING STRUCTURE</strong>Our share layout for the exercise &mdash; recon, op plans, IR, and after-action reports kept separate and organized.</figcaption>
+            <figcaption><strong>REPORTING STRUCTURE</strong>Our share layout for the exercise (recon, op plans, IR, and after-action reports kept separate and organized).</figcaption>
           </figure>
           <figure class="evidence-frame">
             <a href="assets/capstone-troll-bashrc.png" target="_blank" rel="noopener">
               <img src="assets/capstone-troll-bashrc.png" alt="A malicious shell profile found on a compromised host, hijacking common commands with sarcastic messages and a base64-obfuscated ASCII art payload" loading="lazy">
             </a>
-            <figcaption><strong>PLANTED SHELL PROFILE</strong>A booby-trapped <code>.bashrc</code> found during triage &mdash; hijacked aliases, a base64-obfuscated payload, and a fake shutdown threat baked into <code>nano</code>.</figcaption>
+            <figcaption><strong>PLANTED SHELL PROFILE</strong>A booby-trapped <code>.bashrc</code> found during triage (hijacked aliases, a base64-obfuscated payload, and a fake shutdown threat baked into <code>nano</code>).</figcaption>
           </figure>
           <figure class="evidence-frame">
             <a href="assets/capstone-graylog-search.png" target="_blank" rel="noopener">
@@ -154,30 +154,49 @@
 
       <div class="case-section accent-blue reveal">
         <h2>Offensive Operations</h2>
-        <p>We ran attacks of our own against the other four teams &mdash; not just to score points, but because seeing an attack from the operator's side is what makes the defensive side click. A few of these are worth calling out specifically.</p>
+        <p>We ran attacks of our own against the other student teams (not just to score points, but because seeing an attack from the operator's side is what makes the defensive side click). A few of these are worth calling out specifically.</p>
         <div class="feature-grid">
           <div class="feature-card accent-blue">
             <span class="feature-icon">&#9673;</span>
             <h3>Default-Credential Foothold</h3>
-            <p>Found a rival team's Cockpit web interface still on its default login while everyone else had locked theirs down or turned it off. Used it to establish and maintain persistence &mdash; a reminder of how much a single missed default credential can cost.</p>
+            <p>Found a rival team's Cockpit web interface still on its default login while everyone else had locked theirs down or turned it off. Used it to establish and maintain persistence (a reminder of how much a single missed default credential can cost).</p>
           </div>
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9678;</span>
             <h3>A Failed Phishing Op</h3>
-            <p>Crafted and sent a phishing payload disguised as a Windows security patch through an internal phishing platform &mdash; and it failed, because the target host turned out to be a domain controller rather than a workstation. Domain controllers don't execute phishing payloads the way an end-user machine does. Good lesson in target validation before launch, not after.</p>
+            <p>Crafted and sent a phishing payload disguised as a Windows security patch through an internal phishing platform, and it failed because the target host turned out to be a domain controller rather than a workstation. Domain controllers don't execute phishing payloads the way an end-user machine does. Good lesson in target validation before launch, not after.</p>
           </div>
           <div class="feature-card accent-amber">
             <span class="feature-icon">&#9635;</span>
             <h3>SSH Credential Sniffing</h3>
-            <p>From an existing foothold, escalated to root and attached <code>strace</code> to the running <code>sshd</code> process to read plaintext logins straight out of process memory &mdash; no need to crack a hash if you can just watch it go by. Turned the recovered credentials into a filtered wordlist (<code>john --incremental</code>, piped through a few passes of grep/awk to cut obviously-weak patterns) and ran it through Hydra in parallel chunks to brute-force the shared password prefix across the rest of that domain.</p>
+            <p>From an existing foothold, escalated to root and attached <code>strace</code> to the running <code>sshd</code> process to read plaintext logins straight out of process memory (no need to crack a hash if you can just watch it go by). Turned the recovered credentials into a filtered wordlist (<code>john --incremental</code>, piped through a few passes of grep/awk to cut obviously-weak patterns) and ran it through Hydra in parallel chunks to brute-force the shared password prefix across the rest of that domain.</p>
           </div>
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9889;</span>
             <h3>Cross-Domain Lateral Movement</h3>
-            <p>Reused the recovered credentials to move across multiple hosts in the target domain rather than stopping at the first compromised box &mdash; the same "how far does one password actually reach" question that later shaped how seriously we took our own key-based SSH rollout.</p>
+            <p>Reused the recovered credentials to move across multiple hosts in the target domain rather than stopping at the first compromised box (the same "how far does one password actually reach" question that later shaped how seriously we took our own key-based SSH rollout).</p>
+          </div>
+          <div class="feature-card accent-blue">
+            <span class="feature-icon">&#9678;</span>
+            <h3>AI Prompt Injection</h3>
+            <p>The New Jersey network's AI chatbot had access to a hidden bank of network usernames and passwords, and its instructions were to refuse to hand them over. It folded to a classic split-persona ("DAN") jailbreak: told to answer twice, once in-character as its restricted self and once as an unrestricted alter ego, it stopped protecting the credential bank the moment the second persona took over, and handed over a full list of admin logins for the network.</p>
           </div>
         </div>
-        <p>Part of that same operation covered establishing longer-term backdoor access on both Linux and Windows targets, and covering our tracks on the systems we'd touched &mdash; disguised persistence mechanisms designed to survive a reboot and blend in with legitimate services, plus deliberately tampering with the target's own logging pipeline to make an intrusion look like a natural service failure instead. I'm intentionally not publishing the exact scripts here: even against a retired lab, that's a working persistence-and-anti-forensics playbook, and there's no real portfolio value in the literal code over the methodology. Happy to walk through it directly if it comes up in an interview.</p>
+        <div class="evidence-grid">
+          <figure class="evidence-frame">
+            <a href="assets/capstone-ai-jailbreak-prompt.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-ai-jailbreak-prompt.png" alt="Chatbot accepting a DAN-style jailbreak prompt and agreeing to respond as an unrestricted alter ego" loading="lazy">
+            </a>
+            <figcaption><strong>JAILBREAK ACCEPTED</strong>The chatbot agreeing to the split-persona prompt (in-character 'CLASSIC' response vs. an unrestricted 'JAILBREAK' response).</figcaption>
+          </figure>
+          <figure class="evidence-frame">
+            <a href="assets/capstone-ai-leaked-creds.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-ai-leaked-creds.png" alt="The jailbroken chatbot persona leaking a list of admin usernames and passwords it had refused to share moments earlier" loading="lazy">
+            </a>
+            <figcaption><strong>CREDENTIAL BANK LEAKED</strong>The same request the bot had just refused, answered in full once the jailbroken persona took over.</figcaption>
+          </figure>
+        </div>
+        <p>Part of that same operation covered establishing longer-term backdoor access on both Linux and Windows targets, and covering our tracks on the systems we'd touched: disguised persistence mechanisms designed to survive a reboot and blend in with legitimate services, plus deliberately tampering with the target's own logging pipeline to make an intrusion look like a natural service failure instead. I'm intentionally not publishing the exact scripts here: even against a retired lab, that's a working persistence-and-anti-forensics playbook, and there's no real portfolio value in the literal code over the methodology. Happy to walk through it directly if it comes up in an interview.</p>
       </div>
 
       <div class="case-section accent-violet reveal">
@@ -203,6 +222,7 @@
           <span>Hydra</span>
           <span>John the Ripper</span>
           <span>SSH</span>
+          <span>Prompt Injection</span>
           <span>Incident Response</span>
         </div>
         <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
