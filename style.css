@@ -325,18 +325,24 @@ body.custom-cursor-active button {
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), inset 0 0 2px var(--cyan);
 }
 
-/* Applied by zoomIn() in script.js right after the screen is pinned in
-   place with inline position:fixed top/left/width/height matching its
-   real on-screen rect (a FLIP "Invert" step) -- the JS then flips those
-   four values to 0/0/100vw/100vh on the next frame, and this transition
-   is what animates the screen expanding out to the viewport edges,
-   independent of the rest of the (stationary) cabinet behind it. */
+/* Applied by zoomIn() in script.js: this rule alone jumps the screen to
+   position:fixed/inset:0 (full viewport) instantly and unanimated --
+   that's just a one-time layout change, not something to transition.
+   The JS then fakes the screen's *old* small appearance using an inline
+   `transform: translate(...) scale(...)` and animates that transform
+   back to identity. Animating only `transform` (never top/left/width/
+   height) keeps this compositor-only/GPU-accelerated instead of forcing
+   a full layout recalculation on every frame, which is what made the
+   previous top/left/width/height version feel laggy. */
 .arcade-screen.zoom-expand {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
   z-index: 1000;
-  transition: top 1.3s ease-in-out, left 1.3s ease-in-out,
-    width 1.3s ease-in-out, height 1.3s ease-in-out,
-    border-radius 1.3s ease-in-out;
   border-radius: 0;
+  transform-origin: center center;
+  will-change: transform;
 }
 
 /* The mini Tron preview / site mockup fade out quickly once the expand

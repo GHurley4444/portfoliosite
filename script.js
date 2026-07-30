@@ -167,32 +167,41 @@ function runIntroSequence() {
     skipBtn.classList.remove('visible');
     if (stopPreview) stopPreview();
 
-    // FLIP setup: capture the screen's real on-screen rect, then pin it
-    // there with position:fixed inline styles so it can be expanded
-    // independently of the cabinet's layout (which stays put behind it).
-    const rect = screenEl.getBoundingClientRect();
-    const vw = document.documentElement.clientWidth;
-    const vh = document.documentElement.clientHeight;
+    // FLIP, done with `transform` only (not top/left/width/height): those
+    // are layout properties, so animating them forces the browser to
+    // recompute layout on every single frame -- expensive, and the
+    // direct cause of the reported lag, getting worse as the box
+    // approaches full viewport size. transform (translate + scale) is
+    // compositor-only: the browser can animate it on the GPU without
+    // ever touching layout, which is what actually makes this smooth.
+    const firstRect = screenEl.getBoundingClientRect();
 
-    screenEl.style.position = 'fixed';
-    screenEl.style.top = rect.top + 'px';
-    screenEl.style.left = rect.left + 'px';
-    screenEl.style.width = rect.width + 'px';
-    screenEl.style.height = rect.height + 'px';
-    screenEl.style.margin = '0';
+    // Jump straight to the final layout (full-viewport, via the
+    // position:fixed/inset:0 in the .zoom-expand rule) -- one instant,
+    // unanimated layout change, not an animated one.
+    screenEl.classList.add('zoom-expand');
+    const lastRect = screenEl.getBoundingClientRect(); // now ~{0,0,vw,vh}
 
-    // Force a style/layout flush so the browser commits the pinned rect
-    // above as the committed "before" state. Without this, the pin and
-    // the expansion below can get batched into a single style recalc
-    // with no transition ever playing (the classic instant-jump trap).
+    // Fake the "before" appearance using only transform: scale it down
+    // and shift it back so it renders exactly where/how small it was
+    // a moment ago, even though its actual box is now full-viewport.
+    const scaleX = firstRect.width / lastRect.width;
+    const scaleY = firstRect.height / lastRect.height;
+    const dx = (firstRect.left + firstRect.width / 2) - (lastRect.left + lastRect.width / 2);
+    const dy = (firstRect.top + firstRect.height / 2) - (lastRect.top + lastRect.height / 2);
+
+    screenEl.style.transition = 'none';
+    screenEl.style.transform = `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY})`;
+
+    // Force a style/layout flush so the browser commits that faked
+    // "before" transform before we clear it below. Without this, both
+    // writes can get batched into a single style recalc and the
+    // transition never plays (the classic instant-jump trap).
     void screenEl.offsetHeight;
 
-    screenEl.classList.add('zoom-expand');
     requestAnimationFrame(() => {
-      screenEl.style.top = '0px';
-      screenEl.style.left = '0px';
-      screenEl.style.width = vw + 'px';
-      screenEl.style.height = vh + 'px';
+      screenEl.style.transition = `transform ${EXPAND_MS}ms ease-in-out`;
+      screenEl.style.transform = 'translate(0, 0) scale(1, 1)';
     });
 
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
