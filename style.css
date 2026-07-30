@@ -357,6 +357,15 @@ body.custom-cursor-active button {
 .arcade-screen.zoom-expand .arcade-screen-glare {
   transition: opacity 0.4s ease;
   opacity: 0;
+  /* .arcade-screen-label also has its own infinite `blink` animation --
+     CSS animations take precedence over plain opacity declarations in
+     the cascade, so without turning it off here too, the label would
+     keep blinking through its own opacity:0 for as long as the
+     animation runs. See the fuller explanation on .hidden below, where
+     this exact bug was actually surfacing (this rule was mostly moot
+     by comparison, since .hidden already applies by the time zoom
+     starts, but the same fix belongs here for the same reason). */
+  animation: none;
 }
 
 .arcade-screen canvas {
@@ -452,7 +461,16 @@ body.custom-cursor-active button {
   animation: blink 1s step-start infinite;
   transition: opacity 0.3s ease;
 }
-.arcade-screen-label.hidden { opacity: 0; }
+/* animation:none is the actual fix here, not opacity:0 alone. CSS
+   animation declarations take precedence over plain (non-!important)
+   declarations in the cascade, regardless of specificity -- so with the
+   `blink` keyframe still running, this rule's opacity:0 was losing to
+   the animation's own opacity:1 half of every cycle, and the label
+   just kept blinking forever instead of ever actually going away. That
+   was the real cause of "INSERT COIN" still being visible/blinking
+   over the site mockup and through the zoom: the .hidden class was
+   being applied correctly, it just never worked. */
+.arcade-screen-label.hidden { opacity: 0; animation: none; }
 
 .arcade-screen-glare {
   position: absolute;
