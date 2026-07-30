@@ -1475,6 +1475,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
    word-wrapped task string (middle), swipe hints to the prev/next category
    carousel entry (bottom edges), and PASS/FAIL labels (bottom). */
 .prescript-header {
+  flex-shrink: 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -1495,6 +1496,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 }
 
 .prescript-streak {
+  flex-shrink: 0;
   font-family: var(--font-mono);
   font-size: 0.58rem;
   letter-spacing: 0.08em;
@@ -1503,19 +1505,29 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 
 .prescript-text {
   flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.4;
   letter-spacing: 0.04em;
   color: var(--text);
   text-shadow: var(--glow-sm);
 }
 
+/* Long prescript strings step down in size so PASS/FAIL and the swipe
+   hints never get pushed out of the device screen. Bucket applied via JS
+   based on character count (see setupPrescriptDemo's render()). */
+.prescript-text.len-md { font-size: 0.85rem; }
+.prescript-text.len-lg { font-size: 0.72rem; }
+.prescript-text.len-xl { font-size: 0.6rem; line-height: 1.3; }
+
 .prescript-swipe {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
@@ -1525,6 +1537,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 }
 
 .prescript-actions {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   border-top: 1px solid rgba(55, 244, 255, 0.15);
@@ -2303,6 +2316,9 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 .device-demo .prescript-diff { font-size: 0.78rem; }
 .device-demo .prescript-streak { font-size: 0.72rem; }
 .device-demo .prescript-text { font-size: 1.4rem; }
+.device-demo .prescript-text.len-md { font-size: 1.1rem; }
+.device-demo .prescript-text.len-lg { font-size: 0.9rem; }
+.device-demo .prescript-text.len-xl { font-size: 0.74rem; line-height: 1.3; }
 .device-demo .prescript-swipe button { font-size: 0.7rem; }
 .device-demo .prescript-actions button { font-size: 0.85rem; padding: 6px 16px; }
 

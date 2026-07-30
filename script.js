@@ -1482,6 +1482,10 @@ async function setupGithubStats() {
       else reposEl.textContent = '—';
       if (typeof user.followers === 'number') animateCount(followersEl, user.followers);
       else followersEl.textContent = '—';
+    } else {
+      // Most likely GitHub's unauthenticated rate limit (60 req/hr per IP) —
+      // logged so it's visible in devtools instead of silently staying blank.
+      console.info(`[portfolio] GitHub user lookup failed: ${userRes.status} ${userRes.statusText}`);
     }
 
     const reposRes = await fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=1`);
@@ -1489,6 +1493,8 @@ async function setupGithubStats() {
       const repos = await reposRes.json();
       lastRepoEl.textContent = repos && repos[0] ? repos[0].name : 'none yet';
       lastRepoEl.classList.add('flash');
+    } else {
+      console.info(`[portfolio] GitHub repos lookup failed: ${reposRes.status} ${reposRes.statusText}`);
     }
   } catch (e) {
     console.info('[portfolio] GitHub API unavailable right now:', e);
@@ -1945,6 +1951,18 @@ function setupLyrics() {
   });
 }
 
+// Prescript strings vary wildly in length ("KILL 5 ENEMIES" vs a full
+// sentence-length rare pull). Step the font size down for longer strings
+// so the task text never grows past its flex box and pushes PASS/FAIL
+// or the swipe hints off the visible device screen.
+function applyTextLengthClass(el, text) {
+  el.classList.remove('len-md', 'len-lg', 'len-xl');
+  const len = text ? text.length : 0;
+  if (len > 70) el.classList.add('len-xl');
+  else if (len > 50) el.classList.add('len-lg');
+  else if (len > 32) el.classList.add('len-md');
+}
+
 function setupPrescriptDemo() {
   const device = document.getElementById('demoDevice');
   if (!device) return;
@@ -2029,6 +2047,7 @@ function setupPrescriptDemo() {
     }
 
     if (taskText !== lastRenderedText) {
+      applyTextLengthClass(textEl, taskText);
       scrambleText(textEl, taskText);
       lastRenderedText = taskText;
     }
