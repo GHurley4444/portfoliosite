@@ -260,11 +260,26 @@ function runPageRevealSequence() {
 function setupTypewriter() {
   const el = document.querySelector('.hero-eyebrow');
   if (!el) return;
-  const target = el.scrollWidth;
-  requestAnimationFrame(() => {
-    el.style.width = `${target}px`;
-    el.classList.add('typed');
-  });
+
+  // scrollWidth has to be measured with the real webfont metrics, not the
+  // fallback font it's rendered in before 'Share Tech Mono' finishes
+  // loading -- measuring too early locks in a pixel width that's too
+  // narrow once the swap happens, clipping the tail of the text against
+  // overflow: hidden. document.fonts.ready resolves once all @font-face
+  // fonts referenced on the page have loaded (or immediately, in browsers
+  // without the Font Loading API).
+  function run() {
+    requestAnimationFrame(() => {
+      el.style.width = `${el.scrollWidth}px`;
+      el.classList.add('typed');
+    });
+  }
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(run).catch(run);
+  } else {
+    run();
+  }
 }
 
 // ===================== Text scramble (prescript demo) =====================
