@@ -319,16 +319,44 @@ body.custom-cursor-active button {
   justify-content: space-between;
 }
 
+/* A system ID tag, not a wordmark — monospace, single accent color, framed
+   in dim brackets that only light up on hover, with the same corner-reticle
+   flourish used on cards elsewhere in the site. Reads like a real terminal
+   identifier instead of a decorative logotype. */
 .logo {
-  font-family: var(--font-display);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--cyan);
   text-shadow: var(--glow-sm);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
+  padding: 0.35em 0.5em;
 }
-.logo-dot { color: var(--violet); }
-.logo-sub { font-size: 0.6rem; color: var(--text-dim); margin-left: 0.4em; font-family: var(--font-mono); }
+.logo-bracket {
+  color: var(--text-dim);
+  font-weight: 400;
+  text-shadow: none;
+  transition: color 0.25s ease;
+}
+.logo:hover .logo-bracket { color: var(--cyan); }
+.logo-dot { color: var(--cyan-soft); }
+
+.logo::before,
+.logo::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 0.25s ease, height 0.25s ease, opacity 0.25s ease;
+}
+.logo::before { top: 0; left: 0; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+.logo::after { bottom: 0; right: 0; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+.logo:hover::before, .logo:hover::after { width: 10px; height: 10px; opacity: 1; }
 
 .main-nav { display: flex; gap: 2rem; }
 
