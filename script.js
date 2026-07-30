@@ -1117,6 +1117,28 @@ async function setupGithubStats() {
   }
 }
 
+// ===================== Email obfuscation =====================
+// The address never appears in the page's raw HTML (view-source, curl,
+// or any scraper that doesn't execute JS sees a bare "reveal email" link
+// with href="#"). It's assembled from split data-attributes and written
+// into a real mailto: link once the page loads. Doesn't stop a scraper
+// that runs a full headless browser, but that's a small minority of the
+// bots harvesting addresses at scale — most just regex raw HTML across
+// as many pages as possible as cheaply as possible, and this is invisible
+// to that. Real visitors (and screen readers, which read the live DOM
+// after this runs) see a completely normal clickable email link.
+function setupEmailReveal() {
+  const link = document.getElementById('emailLink');
+  const valueEl = document.getElementById('emailValue');
+  if (!link || !valueEl) return;
+  const user = link.dataset.user;
+  const domain = link.dataset.domain;
+  if (!user || !domain) return;
+  const address = `${user}@${domain}`;
+  link.href = `mailto:${address}`;
+  valueEl.textContent = address;
+}
+
 // ===================== Active nav by current page =====================
 // Scroll-spy only fires on index.html (the only page with matching section ids).
 // On other pages, mark the nav link for the current page active instead.
@@ -1324,6 +1346,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMobileNav();
   setupPlaceholderLinks();
   setupGithubStats();
+  setupEmailReveal();
   setActiveNavByPage();
   setupPrescriptDemo();
   setupFooterYear();
