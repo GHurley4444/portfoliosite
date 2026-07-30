@@ -608,20 +608,39 @@ function createGridEngine() {
     resolveTick();
   }
 
+  const TRAIL_RECENT = 12; // segments this close to the head render fully opaque
+
+  function pathThrough(points) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x * CELL + CELL / 2, points[0].y * CELL + CELL / 2);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x * CELL + CELL / 2, points[i].y * CELL + CELL / 2);
+    }
+    ctx.stroke();
+  }
+
   function drawTrail(bot) {
+    // A trail can grow to hundreds of segments over a round, and this used
+    // to issue one full beginPath/moveTo/lineTo/stroke per segment, every
+    // single redraw -- real per-frame cost that only got worse as a round
+    // went on, enough to visibly stall the main thread (and anything else
+    // running on it, like cursor tracking). Batches the same fade look
+    // into at most two stroke() calls instead: one path for the dimmer
+    // older stretch, one for the fully-opaque recent stretch.
     const trail = bot.trail;
+    if (trail.length < 2) return;
     ctx.strokeStyle = bot.color;
     ctx.lineWidth = 3;
     ctx.lineCap = 'square';
-    for (let i = 1; i < trail.length; i++) {
-      const age = trail.length - i;
-      ctx.globalAlpha = age < 12 ? 1 : 0.55;
-      ctx.beginPath();
-      ctx.moveTo(trail[i - 1].x * CELL + CELL / 2, trail[i - 1].y * CELL + CELL / 2);
-      ctx.lineTo(trail[i].x * CELL + CELL / 2, trail[i].y * CELL + CELL / 2);
-      ctx.stroke();
+    ctx.lineJoin = 'round';
+
+    const splitIndex = Math.max(trail.length - TRAIL_RECENT, 0);
+    if (splitIndex > 0) {
+      ctx.globalAlpha = 0.55;
+      pathThrough(trail.slice(0, splitIndex + 1));
     }
     ctx.globalAlpha = 1;
+    pathThrough(trail.slice(splitIndex));
   }
 
   function drawHead(bot) {
