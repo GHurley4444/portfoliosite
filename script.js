@@ -631,6 +631,37 @@ function createGridEngine() {
     }
   }
 
+  function drawPlayerMarker(now) {
+    // The white outline on the player's head helps up close, but at a
+    // glance during a live match it's easy to lose track of which runner
+    // is yours. This drops a bobbing "YOU" arrow right over it whenever
+    // the player bike exists on screen — set up, countdown, and live play.
+    if (mode !== 'prompt' && mode !== 'countdown' && mode !== 'playing') return;
+    const player = bots.find((b) => b.id === playerId);
+    if (!player || !player.alive) return;
+
+    const cx = player.x * CELL + CELL / 2;
+    const cy = player.y * CELL + CELL / 2;
+    const bob = Math.sin(now / 260) * 4;
+    const tipY = cy - CELL * 1.4 + bob;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 12px "Share Tech Mono", monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = player.color;
+    ctx.shadowBlur = 10;
+    ctx.fillText('YOU', cx, tipY - 12);
+
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, tipY - 4);
+    ctx.lineTo(cx + 7, tipY - 4);
+    ctx.lineTo(cx, tipY + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   function drawEffects(now) {
     const DURATION = 550;
     effects = effects.filter((fx) => now - fx.start < DURATION);
@@ -657,7 +688,9 @@ function createGridEngine() {
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     bots.forEach(drawTrail);
     bots.forEach(drawHead);
-    drawEffects(performance.now());
+    const now = performance.now();
+    drawEffects(now);
+    drawPlayerMarker(now);
   }
 
   function startTickLoop() {
@@ -677,7 +710,10 @@ function createGridEngine() {
     rafRunning = true;
     (function raf() {
       if (!running) { rafRunning = false; return; }
-      if (effects.length) draw();
+      // Keep redrawing through crash effects, and through the paused
+      // prompt/countdown screens too so the "YOU" marker still bobs while
+      // players wait to launch instead of sitting frozen.
+      if (effects.length || mode === 'prompt' || mode === 'countdown') draw();
       requestAnimationFrame(raf);
     })();
   }
