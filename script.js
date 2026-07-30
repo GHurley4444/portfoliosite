@@ -148,25 +148,48 @@ function runIntroSequence() {
   });
 
   let sitePreviewShown = false;
+  let sitePreviewShownAt = 0;
   function showSitePreview() {
     if (sitePreviewShown) return;
     sitePreviewShown = true;
+    sitePreviewShownAt = Date.now();
     if (label) label.classList.add('hidden');
     if (sitePreview) sitePreview.classList.add('visible');
   }
 
   const EXPAND_MS = 1300;
+  // Matches .arcade-site-preview's own opacity transition duration (0.7s)
+  // plus a small margin -- see the wait below.
+  const MOCKUP_FADE_MS = 750;
 
   let finished = false;
   function zoomIn() {
     if (finished) return;
     finished = true;
-    showSitePreview(); // in case this fires early via skip/keydown
     window.removeEventListener('keydown', onKey);
     skipBtn.removeEventListener('click', zoomIn);
     skipBtn.classList.remove('visible');
     if (stopPreview) stopPreview();
+    try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
 
+    // showSitePreview() is idempotent and records when it actually ran
+    // (sitePreviewShownAt), whether that was the natural 1200ms beat or
+    // right now because zoomIn fired early via skip/keydown -- so this
+    // one formula covers both cases. If the mockup's own 0.7s fade-in
+    // hasn't had time to finish yet, wait out whatever's left of it
+    // before expanding. Otherwise the growing screen (which covers the
+    // cabinet chrome within a couple hundred ms) carries the mockup away
+    // before it's ever become visible -- the reported "black square"
+    // was this: the content wasn't faded to black, it just hadn't
+    // faded IN yet.
+    showSitePreview();
+    const elapsed = Date.now() - sitePreviewShownAt;
+    const waitMore = Math.max(0, MOCKUP_FADE_MS - elapsed);
+
+    setTimeout(startExpand, waitMore);
+  }
+
+  function startExpand() {
     // FLIP, done with `transform` only (not top/left/width/height): those
     // are layout properties, so animating them forces the browser to
     // recompute layout on every single frame -- expensive, and the
@@ -203,8 +226,6 @@ function runIntroSequence() {
       screenEl.style.transition = `transform ${EXPAND_MS}ms ease-in-out`;
       screenEl.style.transform = 'translate(0, 0) scale(1, 1)';
     });
-
-    try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
 
     // Once the screen has finished expanding to cover the full viewport,
     // it's already visually indistinguishable from a blank overlay --
