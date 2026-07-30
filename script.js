@@ -134,9 +134,15 @@ function setupCustomCursor() {
     ring.style.opacity = '0';
   });
 
+  // The ring deliberately trails the raw pointer position a touch so it
+  // doesn't feel robotic, but the OS cursor is hidden entirely (cursor:
+  // none) so this ring is the only visual feedback people get — at a low
+  // catch-up rate that reads as sluggish/"weighted" instead of smooth,
+  // especially on fast swipes. 0.55 still rounds off the motion slightly
+  // but converges in 2-3 frames instead of 8-10.
   function loop() {
-    ringX += (mouseX - ringX) * 0.18;
-    ringY += (mouseY - ringY) * 0.18;
+    ringX += (mouseX - ringX) * 0.55;
+    ringY += (mouseY - ringY) * 0.55;
     ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
     requestAnimationFrame(loop);
   }
