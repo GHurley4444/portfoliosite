@@ -101,6 +101,16 @@ a { color: inherit; text-decoration: none; }
   pointer-events: none;
   opacity: 0.6;
   mix-blend-mode: screen;
+  transition: opacity 0.4s ease;
+}
+
+/* The cycles run at full brightness by default, but that glow can fight
+   with the text the moment it fades back in on hover. Dim the canvas
+   itself while a reader is actually hovering the content, then let it
+   brighten back up as soon as they move on. */
+body.bg-lightcycle:has(main:hover) .lightcycle-bg,
+body.bg-lightcycle:has(.site-footer:hover) .lightcycle-bg {
+  opacity: 0.22;
 }
 
 /* Tron mode: fade the page content itself so the grid battle running
