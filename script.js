@@ -114,10 +114,12 @@ function startMiniTronPreview(canvas) {
 //      (same fonts/gradient/logo, not a live copy -- see arcadeSitePreview
 //      comment below) -- reads as "the site loading up" on the screen.
 //   2. After a hold, the cabinet fades out (a plain opacity transition,
-//      not a zoom/transform), then runPageRevealSequence() (below)
-//      kicks off on the real page underneath -- so the cabinet is gone
-//      before the top-to-bottom wipe starts, rather than the wipe
-//      starting while it's still visible.
+//      not a zoom/transform). The page-reveal cover (see
+//      runPageRevealSequence() below) is dropped in underneath it --
+//      already fully opaque, just not yet animating -- at the moment
+//      the fade starts, so the cabinet fades into that cover instead of
+//      into the raw real page. Only once the cabinet is actually gone
+//      does the cover's own top-to-bottom wipe start playing.
 // Returns true if the intro actually ran (first visit this session, not
 // reduced-motion), false if it was skipped outright -- callers use that
 // to know whether they still need to trigger the page-reveal themselves.
@@ -171,14 +173,20 @@ function runIntroSequence() {
     if (stopPreview) stopPreview();
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
 
-    // Fade the cabinet out (plain opacity transition, see .fade-out in
-    // style.css) instead of just yanking it away -- then remove it and
-    // hand off to the page-reveal wipe only once it's actually gone, so
-    // the two effects don't overlap.
+    // Insert the page-reveal cover NOW, underneath the still-visible
+    // cabinet (it comes back paused -- see runPageRevealSequence()) --
+    // not after the fade finishes. The cabinet fading to transparent
+    // over the next 500ms would otherwise expose the real, un-wiped
+    // page behind it for a moment before the reveal cover existed at
+    // all. With it already in place (fully opaque, z-index below the
+    // still-fading cabinet), that gap closes: the cabinet just fades
+    // into the reveal cover instead of fading into raw page content.
+    const startReveal = runPageRevealSequence();
+
     overlay.classList.add('fade-out');
     setTimeout(() => {
       overlay.remove();
-      runPageRevealSequence();
+      startReveal(); // cabinet's fully gone now -- start the actual wipe
     }, FADE_MS);
   }
 
@@ -205,22 +213,44 @@ function runIntroSequence() {
 // Runs after the arcade intro's hard cut on first visit (chained from
 // finish() above), or directly on every other page load/page (see the
 // runIntroSequence() return value check in the init block below).
+// Inserts the reveal cover immediately (already fully opaque/covering,
+// but with its animation paused at frame one) and returns a start()
+// function that actually plays the wipe. Splitting insertion from
+// playback like this lets a caller -- namely the arcade intro's
+// finish() -- drop the cover into place right away, underneath
+// whatever's still fading out on top of it, so there's no gap where
+// the real page is exposed between that fade finishing and this
+// existing. Callers with nothing else going on (every other page, or
+// reduced-motion/already-seen skips of the intro) just call the
+// returned function immediately.
 function runPageRevealSequence() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
 
   const reveal = document.createElement('div');
   reveal.className = 'page-reveal';
   reveal.setAttribute('aria-hidden', 'true');
+  reveal.style.animationPlayState = 'paused';
   const scan = document.createElement('div');
   scan.className = 'page-reveal-scan';
+  scan.style.animationPlayState = 'paused';
   reveal.appendChild(scan);
   document.body.appendChild(reveal);
 
   const REVEAL_MS = 1400;
   reveal.addEventListener('animationend', () => reveal.remove());
-  // Fallback in case animationend doesn't fire for some reason (e.g. the
-  // tab was backgrounded and the animation got suspended/skipped).
-  setTimeout(() => { if (reveal.isConnected) reveal.remove(); }, REVEAL_MS + 300);
+
+  let started = false;
+  return function start() {
+    if (started) return;
+    started = true;
+    reveal.style.animationPlayState = 'running';
+    scan.style.animationPlayState = 'running';
+    // Fallback in case animationend doesn't fire for some reason (e.g.
+    // the tab was backgrounded and the animation got suspended/skipped).
+    // Timed from here (actual playback start), not from insertion --
+    // the cover may have sat paused for a while before this runs.
+    setTimeout(() => { if (reveal.isConnected) reveal.remove(); }, REVEAL_MS + 300);
+  };
 }
 
 // ===================== Hero eyebrow typewriter =====================
@@ -1512,12 +1542,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // runIntroSequence() only exists/does anything on index.html, and only
   // actually plays once per session there; runPageRevealSequence() is
   // the general "page loads in" effect for every page. If the arcade
-  // intro is going to play, it chains into the reveal itself once it
-  // hard-cuts (so the reveal happens on the real page, not underneath
-  // the still-visible cabinet) -- otherwise (other pages, or the intro
-  // was already seen/skipped by reduced-motion) trigger it directly here.
+  // intro is going to play, it inserts and starts the reveal itself at
+  // the right moment (see finish() above) -- otherwise (other pages, or
+  // the intro was already seen/skipped by reduced-motion) start it
+  // immediately here; runPageRevealSequence() returns a start()
+  // function rather than playing right away, hence calling it.
   const introPlayed = runIntroSequence();
-  if (!introPlayed) runPageRevealSequence();
+  if (!introPlayed) runPageRevealSequence()();
   setupTypewriter();
   setupScrambleOnLoad();
   setupHeaderScroll();
