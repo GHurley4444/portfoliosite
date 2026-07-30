@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Blackjack // Garrett Hurley</title>
+<meta name="description" content="Python Blackjack — a from-scratch terminal blackjack engine in Python, reworked into a playable in-browser demo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo"><span class="logo-bracket" aria-hidden="true">[</span>GH<span class="logo-dot">_</span>SYS<span class="logo-bracket" aria-hidden="true">]</span></a>
+    <nav class="main-nav">
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <div class="header-actions">
+      <button class="bg-toggle" id="bgToggle" type="button" aria-pressed="true" aria-label="Toggle Tron background">
+        <span class="bg-toggle-dot"></span>TRON
+      </button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-banner">
+    <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
+    <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // BLACKJACK</p>
+    <h1 class="page-title" data-scramble-load>Python Blackjack</h1>
+    <p class="page-desc">A from-scratch terminal blackjack engine in Python — deck modeling, soft-Ace math, and dealer logic — reworked here into a playable browser demo.</p>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+
+      <a href="projects.html" class="back-link">&larr; ALL PROJECTS</a>
+
+      <div class="case-section accent-violet reveal">
+        <h2>Concept &amp; Rules</h2>
+        <p>A single-player, single-round blackjack game built to run straight from the terminal. Standard rules: closest to 21 without going over wins, a two-card 21 is a blackjack, and Aces count as 11 unless that would bust the hand, in which case they drop to 1 one at a time.</p>
+        <p>Everything &mdash; the deck, the dealer, the hit/stand loop, and the payout logic &mdash; is built from plain Python data structures and control flow. No external libraries beyond the standard-library <code>random</code> module.</p>
+      </div>
+
+      <div class="case-section accent-cyan reveal">
+        <h2>What It Does</h2>
+
+        <div class="feature-grid">
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9827;</span>
+            <h3>Card &amp; Deck Modeling</h3>
+            <p>A small <code>Card</code> class pairs a value and a suit; the full 52-card deck is built by crossing every value against every suit, then cloned per round so the source deck stays untouched.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9824;</span>
+            <h3>Soft-Ace Resolution</h3>
+            <p>Every draw recounts the Aces in a hand and demotes them from 11 to 1, one at a time, until the total reads 21 or under &mdash; the same check runs for both the player and the dealer.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9829;</span>
+            <h3>Hit or Stand Loop</h3>
+            <p>A simple input loop keeps drawing on "hit" and re-peeking the hand after every card, until the player stands or busts.</p>
+          </div>
+          <div class="feature-card accent-blue">
+            <span class="feature-icon">&#9830;</span>
+            <h3>Dealer Draws to 17</h3>
+            <p>The dealer only plays after the player's turn ends, and always draws until its hand totals 17 or more &mdash; standard house rules, no peeking ahead.</p>
+          </div>
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9827;</span>
+            <h3>Full Round Resolution</h3>
+            <p>Six explicit outcome branches: both bust (push), dealer bust, a tie, a dealer win, a player win, and a player blackjack paying out at a higher rate.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9824;</span>
+            <h3>Deck Exhaustion Guard</h3>
+            <p>Both the player's and dealer's draw functions bail out safely if the shared deck ever runs dry mid-round, instead of throwing.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-section accent-violet reveal">
+        <h2>Play It</h2>
+        <div class="case-grid case-grid-demo">
+          <div class="project-visual">
+            <div class="bj-table" id="bjTable">
+              <div class="bj-row">
+                <span class="bj-row-label">DEALER<span class="bj-sum" id="bjDealerSum"></span></span>
+                <div class="bj-hand" id="bjDealerHand"></div>
+              </div>
+              <div class="bj-status" id="bjStatus">PLACE YOUR BET</div>
+              <div class="bj-row">
+                <span class="bj-row-label">YOU<span class="bj-sum" id="bjPlayerSum"></span></span>
+                <div class="bj-hand" id="bjPlayerHand"></div>
+              </div>
+              <div class="bj-controls">
+                <div class="bj-chip-row" id="bjBetControls">
+                  <span class="bj-chips">CHIPS <span id="bjBalance">500</span></span>
+                  <button type="button" class="tool-btn-sm" id="bjBetMinus">&minus;25</button>
+                  <span class="bj-bet-readout">BET <span id="bjBetVal">25</span></span>
+                  <button type="button" class="tool-btn-sm" id="bjBetPlus">+25</button>
+                  <button type="button" class="tool-btn" id="bjDealBtn">DEAL</button>
+                </div>
+                <div class="bj-play-row hidden" id="bjPlayControls">
+                  <button type="button" class="tool-btn" id="bjHitBtn">HIT</button>
+                  <button type="button" class="tool-btn" id="bjStandBtn">STAND</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="demo-live-tag"><span class="demo-live-dot"></span> LIVE DEMO &mdash; RUNS IN YOUR BROWSER</p>
+            <p>A JS port of <code>main.py</code>'s own deck, soft-Ace, and dealer-threshold logic &mdash; not a separate reimplementation. Adjust the bet, deal, and hit or stand until you either bust or stand on your total.</p>
+            <p>Payouts: a standard win pays 1:1, a two-card blackjack pays 3:2, a push returns your bet, and a bust (yours, with the dealer still in play) loses it. One quirk kept faithfully from the source: the dealer always plays its hand out to 17+, even in rounds you've already busted &mdash; exactly what <code>roundFinish()</code> does.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-section accent-amber reveal">
+        <h2>From Terminal to Browser</h2>
+        <p>The original is a single self-contained round, run once from the command line, with placeholder payout text (<code>+, winnings ,!</code>) in place of real numbers &mdash; it was written to prove the rules logic, not to track a bankroll. The browser demo above loops rounds, reshuffles a fresh deck on every deal, and replaces that placeholder text with a real chip balance and real payout math, while keeping the exact same card values, soft-Ace counting, and dealer-stands-on-17 behavior as <code>main.py</code>.</p>
+      </div>
+
+      <div class="case-section accent-blue reveal">
+        <h2>Tech Stack</h2>
+        <div class="tech-tags">
+          <span>Python 3</span>
+          <span>Object-Oriented Design</span>
+          <span>CLI I/O</span>
+          <span>Randomized Deck Shuffling</span>
+          <span>Ace Soft/Hard Counting</span>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
+          <a href="https://github.com/GHurley4444/Python-Blackjack" target="_blank" rel="noopener" class="btn btn-primary">VIEW REPO</a>
+          <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy. <button class="secret-trigger" id="secretTrigger" type="button" aria-label="Play the light-cycle game"><span class="secret-trigger-dot"></span>PLAY THE GRID</button></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

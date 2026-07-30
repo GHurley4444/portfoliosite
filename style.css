@@ -2053,6 +2053,21 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 }
 .ghost-card:hover { border-color: var(--accent-border-strong, rgba(55, 244, 255, 0.4)); }
 
+.more-projects.has-3 { grid-template-columns: repeat(3, 1fr); }
+
+.ghost-card-live {
+  border-style: solid;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+.ghost-card-live p { color: var(--text); }
+.ghost-card-live:hover {
+  box-shadow: 0 0 18px var(--accent-glow, rgba(55, 244, 255, 0.35));
+  transform: translateY(-3px);
+}
+.ghost-card-live .gallery-card-cta { display: block; margin-top: 0.8rem; }
+
 .ghost-tag {
   display: block;
   font-family: var(--font-mono);
@@ -2346,6 +2361,97 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 .device-demo .lyrics-text { font-size: 0.72rem; }
 .device-demo .lyrics-song-title { font-size: 0.75rem; }
 
+/* ===================== Blackjack demo (project-blackjack.html) ===================== */
+.bj-table {
+  width: 420px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 1.6rem;
+  box-shadow: var(--glow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.bj-row { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.bj-row-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.bj-sum { color: var(--cyan-soft); margin-left: 0.5em; }
+
+.bj-hand { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 74px; }
+
+.bj-card {
+  width: 46px;
+  height: 66px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--panel-solid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  animation: bjDeal 0.25s ease;
+}
+
+.bj-card-rank { font-size: 1.05rem; font-weight: 700; }
+.bj-card-suit { font-size: 0.95rem; }
+
+.bj-card-black { color: var(--cyan-soft); box-shadow: 0 0 10px rgba(55, 244, 255, 0.2); }
+.bj-card-red { color: var(--amber-soft); box-shadow: 0 0 10px rgba(255, 184, 77, 0.2); }
+
+.bj-card-back {
+  color: var(--text-dimmer);
+  font-size: 1.3rem;
+  border-style: dashed;
+}
+
+@keyframes bjDeal {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bj-status {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--violet-soft);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 0;
+}
+
+.bj-controls { display: flex; flex-direction: column; gap: 0.8rem; }
+
+.bj-chip-row, .bj-play-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.bj-chip-row.hidden, .bj-play-row.hidden { display: none; }
+
+.bj-chips, .bj-bet-readout {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.bj-chips span, .bj-bet-readout span { color: var(--cyan-soft); }
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -2391,6 +2497,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
   .feature-grid { grid-template-columns: 1fr; }
   .skills-grid { grid-template-columns: 1fr; }
   .more-projects { grid-template-columns: 1fr; }
+  .more-projects.has-3 { grid-template-columns: 1fr; }
   .case-grid { grid-template-columns: 1fr; }
 }
 

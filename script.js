@@ -2138,6 +2138,185 @@ function setupPrescriptDemo() {
   render();
 }
 
+// ===================== Blackjack demo (project-blackjack.html) =====================
+// A JS port of main.py's own deck/value/soft-Ace/dealer-threshold logic --
+// not a separate reimplementation. Unlike the terminal original (one
+// self-contained round with placeholder payout text), this loops rounds
+// with a fresh shuffled deck each deal and computes real chip payouts.
+const BJ_SUITS = ['Hearts', 'Diamonds', 'Spades', 'Clubs'];
+const BJ_VALUES = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
+const BJ_CARD_VALUES = { Ace: 11, King: 10, Queen: 10, Jack: 10 };
+for (let n = 2; n <= 10; n++) BJ_CARD_VALUES[String(n)] = n;
+const BJ_RANK_LABEL = { Ace: 'A', Jack: 'J', Queen: 'Q', King: 'K' };
+const BJ_SUIT_SYMBOL = { Hearts: '♥', Diamonds: '♦', Spades: '♠', Clubs: '♣' };
+
+function bjFreshDeck() {
+  const deck = [];
+  BJ_VALUES.forEach((value) => BJ_SUITS.forEach((suit) => deck.push({ value, suit })));
+  return deck;
+}
+
+function bjDraw(deck, hand, n) {
+  for (let i = 0; i < n; i++) {
+    if (deck.length === 0) break;
+    const idx = Math.floor(Math.random() * deck.length);
+    hand.push(deck.splice(idx, 1)[0]);
+  }
+}
+
+// Mirrors main.py's draw()/dealerDraw(): recount Aces, then demote them
+// from 11 to 1 one at a time while the hand is still over 21.
+function bjHandSum(hand) {
+  let sum = hand.reduce((s, c) => s + BJ_CARD_VALUES[c.value], 0);
+  let aces = hand.filter((c) => c.value === 'Ace').length;
+  while (sum > 21 && aces > 0) { sum -= 10; aces -= 1; }
+  return sum;
+}
+
+function bjCardEl(card, faceDown) {
+  const el = document.createElement('div');
+  if (faceDown) {
+    el.className = 'bj-card bj-card-back';
+    el.textContent = '?';
+    return el;
+  }
+  const red = card.suit === 'Hearts' || card.suit === 'Diamonds';
+  el.className = `bj-card ${red ? 'bj-card-red' : 'bj-card-black'}`;
+  el.innerHTML = `<span class="bj-card-rank">${BJ_RANK_LABEL[card.value] || card.value}</span><span class="bj-card-suit">${BJ_SUIT_SYMBOL[card.suit]}</span>`;
+  return el;
+}
+
+function setupBlackjackDemo() {
+  const table = document.getElementById('bjTable');
+  if (!table) return;
+
+  const dealerHandEl = document.getElementById('bjDealerHand');
+  const playerHandEl = document.getElementById('bjPlayerHand');
+  const dealerSumEl = document.getElementById('bjDealerSum');
+  const playerSumEl = document.getElementById('bjPlayerSum');
+  const statusEl = document.getElementById('bjStatus');
+  const balanceEl = document.getElementById('bjBalance');
+  const betValEl = document.getElementById('bjBetVal');
+  const betMinusBtn = document.getElementById('bjBetMinus');
+  const betPlusBtn = document.getElementById('bjBetPlus');
+  const dealBtn = document.getElementById('bjDealBtn');
+  const betControls = document.getElementById('bjBetControls');
+  const playControls = document.getElementById('bjPlayControls');
+  const hitBtn = document.getElementById('bjHitBtn');
+  const standBtn = document.getElementById('bjStandBtn');
+
+  const BET_STEP = 25;
+
+  let balance = 500;
+  let bet = BET_STEP;
+  let deck = [];
+  let playerHand = [];
+  let dealerHand = [];
+  let inRound = false;
+
+  function renderHands(revealDealer) {
+    dealerHandEl.innerHTML = '';
+    dealerHand.forEach((c, i) => dealerHandEl.appendChild(bjCardEl(c, i === 1 && !revealDealer)));
+    playerHandEl.innerHTML = '';
+    playerHand.forEach((c) => playerHandEl.appendChild(bjCardEl(c, false)));
+
+    playerSumEl.textContent = `(${bjHandSum(playerHand)})`;
+    dealerSumEl.textContent = revealDealer
+      ? `(${bjHandSum(dealerHand)})`
+      : `(${BJ_CARD_VALUES[dealerHand[0].value]}+?)`;
+  }
+
+  function updateBetUI() {
+    balanceEl.textContent = balance;
+    betValEl.textContent = bet;
+    const outOfChips = balance < BET_STEP;
+    betMinusBtn.disabled = bet <= BET_STEP;
+    betPlusBtn.disabled = outOfChips || bet + BET_STEP > balance;
+    dealBtn.disabled = outOfChips;
+    if (outOfChips) statusEl.textContent = 'OUT OF CHIPS — REFRESH TO RESTART';
+  }
+
+  function clampBet() {
+    if (balance < BET_STEP) { bet = 0; return; }
+    if (bet > balance) bet = Math.floor(balance / BET_STEP) * BET_STEP;
+    if (bet < BET_STEP) bet = BET_STEP;
+  }
+
+  betMinusBtn.addEventListener('click', () => {
+    if (bet > BET_STEP) { bet -= BET_STEP; updateBetUI(); }
+  });
+  betPlusBtn.addEventListener('click', () => {
+    if (bet + BET_STEP <= balance) { bet += BET_STEP; updateBetUI(); }
+  });
+
+  function startRound() {
+    if (balance < bet || bet <= 0) return;
+    inRound = true;
+    balance -= bet;
+    deck = bjFreshDeck();
+    playerHand = [];
+    dealerHand = [];
+    bjDraw(deck, dealerHand, 2);
+    bjDraw(deck, playerHand, 2);
+    renderHands(false);
+    statusEl.textContent = 'HIT OR STAND?';
+    betControls.classList.add('hidden');
+    playControls.classList.remove('hidden');
+    updateBetUI();
+  }
+
+  function endRound(resultText, delta) {
+    inRound = false;
+    balance += delta;
+    renderHands(true);
+    statusEl.textContent = resultText;
+    playControls.classList.add('hidden');
+    betControls.classList.remove('hidden');
+    clampBet();
+    updateBetUI();
+  }
+
+  // Mirrors main.py's roundFinish(): the dealer always draws out to 17+,
+  // even in rounds the player has already busted.
+  function finishRound() {
+    while (bjHandSum(dealerHand) < 17) bjDraw(deck, dealerHand, 1);
+
+    const playerSum = bjHandSum(playerHand);
+    const dealerSum = bjHandSum(dealerHand);
+
+    if (playerSum > 21) {
+      if (dealerSum > 21) { endRound('BOTH BUST — BET RETURNED', bet); return; }
+      endRound('YOU BUSTED — BET LOST', 0);
+      return;
+    }
+    if (dealerSum > 21) { endRound('DEALER BUSTS — YOU WIN', bet * 2); return; }
+    if (dealerSum === playerSum) { endRound('PUSH — BET RETURNED', bet); return; }
+    if (dealerSum > playerSum) { endRound('DEALER WINS', 0); return; }
+    if (playerSum === 21) { endRound('BLACKJACK! YOU WIN', Math.round(bet * 2.5)); return; }
+    endRound('YOU WIN', bet * 2);
+  }
+
+  hitBtn.addEventListener('click', () => {
+    if (!inRound) return;
+    bjDraw(deck, playerHand, 1);
+    renderHands(false);
+    if (bjHandSum(playerHand) > 21) {
+      statusEl.textContent = 'BUSTED — DEALER STILL PLAYS...';
+      finishRound();
+    }
+  });
+
+  standBtn.addEventListener('click', () => {
+    if (!inRound) return;
+    statusEl.textContent = 'DEALER PLAYS...';
+    finishRound();
+  });
+
+  dealBtn.addEventListener('click', startRound);
+
+  updateBetUI();
+}
+
 // ===================== Footer year =====================
 function setupFooterYear() {
   const el = document.getElementById('year');
@@ -2182,5 +2361,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCipher();
   setupRecon();
   setupLyrics();
+  setupBlackjackDemo();
   setupFooterYear();
 });
