@@ -110,12 +110,20 @@ function startMiniTronPreview(canvas) {
 //   1. Arcade cabinet appears, a tiny live Tron preview plays on its screen.
 //   2. That preview cross-fades into a small mockup of the site itself
 //      (same fonts/gradient/logo, not a live copy -- see arcadeSitePreview
-//      comment below) -- reads as "the site loading up" on the screen.
-//   3. The cabinet scales up -- by a precisely computed factor so the
-//      screen grows to exactly cover the real viewport, not a guessed
-//      constant -- while the overlay fades concurrently, so the real site
-//      becomes visible through the screen as it grows, like walking
-//      through it, landing on the actual full-size page.
+//      comment below) -- reads as "the site loading up" on the screen,
+//      held for a few seconds so it actually registers.
+//   3. The SCREEN ELEMENT ITSELF -- not the whole cabinet -- is pulled out
+//      of the cabinet's layout via a FLIP (First/Last/Invert/Play) and
+//      expanded from its real on-screen rect to the full viewport. Earlier
+//      versions scaled the whole cabinet (bezel, marquee, joystick and
+//      all) with a CSS transform, which just made the entire cabinet
+//      balloon into a blurry, cropped mess rather than reading as a zoom
+//      into the screen's contents -- and had it fading out at the same
+//      time it was supposed to be growing, so the growth was barely
+//      visible. This version grows only the black screen rectangle
+//      (its mockup content fading out early so it doesn't stretch),
+//      leaving the rest of the cabinet chrome physically behind/covered
+//      as the screen's edges push out to the edges of the viewport.
 function runIntroSequence() {
   const overlay = document.getElementById('introOverlay');
   const canvas = document.getElementById('introCanvas');
@@ -147,6 +155,8 @@ function runIntroSequence() {
     if (sitePreview) sitePreview.classList.add('visible');
   }
 
+  const EXPAND_MS = 1300;
+
   let finished = false;
   function zoomIn() {
     if (finished) return;
@@ -154,35 +164,48 @@ function runIntroSequence() {
     showSitePreview(); // in case this fires early via skip/keydown
     window.removeEventListener('keydown', onKey);
     skipBtn.removeEventListener('click', zoomIn);
+    skipBtn.classList.remove('visible');
+    if (stopPreview) stopPreview();
 
-    const screenRect = screenEl.getBoundingClientRect();
-    const cabinetRect = cabinet.getBoundingClientRect();
-    const originX = ((screenRect.left + screenRect.width / 2 - cabinetRect.left) / cabinetRect.width) * 100;
-    const originY = ((screenRect.top + screenRect.height / 2 - cabinetRect.top) / cabinetRect.height) * 100;
-    cabinet.style.transformOrigin = `${originX}% ${originY}%`;
-
-    // How much the cabinet needs to scale so the screen's real on-screen
-    // rect grows to fully cover the actual viewport -- computed fresh
-    // each time instead of a guessed constant, so this holds up at any
-    // window size. clientWidth/clientHeight (not innerWidth/innerHeight)
-    // to stay consistent with the scrollbar fix in the grid engine.
+    // FLIP setup: capture the screen's real on-screen rect, then pin it
+    // there with position:fixed inline styles so it can be expanded
+    // independently of the cabinet's layout (which stays put behind it).
+    const rect = screenEl.getBoundingClientRect();
     const vw = document.documentElement.clientWidth;
     const vh = document.documentElement.clientHeight;
-    const scaleNeeded = Math.max(vw / screenRect.width, vh / screenRect.height) * 1.08;
-    cabinet.style.setProperty('--zoom-scale', scaleNeeded);
 
-    // Start the cabinet scaling up AND the overlay fading out at the same
-    // moment, instead of one after the other -- the site needs to become
-    // visible THROUGH the growing screen as it happens, not pop in only
-    // after the zoom already finished. Cabinet scale is ease-out over
-    // 0.65s (matched to the overlay's 0.6s fade) so the zoom motion is
-    // front-loaded and fully visible before the layer disappears --
-    // the old back-loaded curve hid ~94% of the motion behind the fade.
-    overlay.classList.add('zooming');
-    overlay.classList.add('hidden');
-    if (stopPreview) stopPreview();
+    screenEl.style.position = 'fixed';
+    screenEl.style.top = rect.top + 'px';
+    screenEl.style.left = rect.left + 'px';
+    screenEl.style.width = rect.width + 'px';
+    screenEl.style.height = rect.height + 'px';
+    screenEl.style.margin = '0';
+
+    // Force a style/layout flush so the browser commits the pinned rect
+    // above as the committed "before" state. Without this, the pin and
+    // the expansion below can get batched into a single style recalc
+    // with no transition ever playing (the classic instant-jump trap).
+    void screenEl.offsetHeight;
+
+    screenEl.classList.add('zoom-expand');
+    requestAnimationFrame(() => {
+      screenEl.style.top = '0px';
+      screenEl.style.left = '0px';
+      screenEl.style.width = vw + 'px';
+      screenEl.style.height = vh + 'px';
+    });
+
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
-    setTimeout(() => overlay.remove(), 750);
+
+    // Once the screen has finished expanding to cover the full viewport,
+    // it's already visually indistinguishable from a blank overlay --
+    // a short opacity fade on the whole thing reveals the real site
+    // underneath, then the overlay is removed for good.
+    setTimeout(() => {
+      overlay.style.transition = 'opacity 0.25s ease';
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 300);
+    }, EXPAND_MS);
   }
 
   function onKey() { zoomIn(); }
@@ -191,7 +214,7 @@ function runIntroSequence() {
 
   setTimeout(() => skipBtn.classList.add('visible'), 500);
   setTimeout(showSitePreview, 1200); // phase 2: Tron preview -> site mockup
-  setTimeout(zoomIn, 2100); // phase 3: zoom through the screen
+  setTimeout(zoomIn, 5100); // phase 3: zoom through the screen (mockup held ~3.9s)
 }
 
 // ===================== Hero eyebrow typewriter =====================

@@ -260,11 +260,15 @@ body.custom-cursor-active button {
 }
 
 /* ===================== Arcade intro (replaces the old boot log) ===================== */
-/* An arcade cabinet with a tiny live Tron preview on its screen, held for
-   ~2s, then the whole cabinet scales up centered exactly on the screen
-   (transform-origin set in JS from the screen's real bounding box) while
-   the bezel/marquee/panel fade out and the real site cross-fades in
-   underneath -- reads as diving through the screen into the site. */
+/* An arcade cabinet with a tiny live Tron preview on its screen, which
+   cross-fades into a small site mockup and holds there for a few
+   seconds, then the SCREEN ITSELF (not the whole cabinet) is pulled out
+   of the cabinet's layout via a FLIP and expanded from its real
+   on-screen rect to fill the full viewport -- see the .zoom-expand rule
+   below and runIntroSequence()'s zoomIn() in script.js. Growing only the
+   screen (rather than transform-scaling the whole cabinet, which just
+   ballooned the bezel/marquee/joystick into a blurry mess) is what
+   actually reads as "the camera pushing into the screen's contents". */
 .intro-overlay {
   position: fixed;
   inset: 0;
@@ -273,7 +277,6 @@ body.custom-cursor-active button {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.6s ease, visibility 0.6s ease;
   overflow: hidden;
 }
 
@@ -285,23 +288,6 @@ body.custom-cursor-active button {
 
 .arcade-cabinet {
   width: min(78vw, 380px);
-  /* A standard ease-out, not the custom curve this used to have -- that
-     one (0.7,0,0.84,0) was badly back-loaded: only ~6% of the scale-up
-     had happened by the time the overlay finished fading and went
-     invisible, so the actual zoom motion was happening on a hidden
-     layer. ease-out front-loads the visible motion instead (~90% done
-     by 60% of the duration), and the duration itself now matches the
-     overlay's 0.6s fade so the whole zoom is visible while it's still
-     on screen, instead of running long past it. */
-  transition: transform 0.65s ease-out;
-  will-change: transform;
-}
-
-.intro-overlay.zooming .arcade-cabinet {
-  /* --zoom-scale is computed in JS from the screen's actual on-screen
-     size vs. the real viewport, so the screen grows to precisely cover
-     it regardless of display size -- 16 is just a sane fallback. */
-  transform: scale(var(--zoom-scale, 16));
 }
 
 .arcade-marquee {
@@ -337,6 +323,32 @@ body.custom-cursor-active button {
   border-radius: 6px;
   overflow: hidden;
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), inset 0 0 2px var(--cyan);
+}
+
+/* Applied by zoomIn() in script.js right after the screen is pinned in
+   place with inline position:fixed top/left/width/height matching its
+   real on-screen rect (a FLIP "Invert" step) -- the JS then flips those
+   four values to 0/0/100vw/100vh on the next frame, and this transition
+   is what animates the screen expanding out to the viewport edges,
+   independent of the rest of the (stationary) cabinet behind it. */
+.arcade-screen.zoom-expand {
+  z-index: 1000;
+  transition: top 1.3s ease-in-out, left 1.3s ease-in-out,
+    width 1.3s ease-in-out, height 1.3s ease-in-out,
+    border-radius 1.3s ease-in-out;
+  border-radius: 0;
+}
+
+/* The mini Tron preview / site mockup fade out quickly once the expand
+   starts so they don't visibly stretch as the screen's aspect ratio
+   changes from 4:3 to the viewport's -- leaves a clean glowing panel
+   growing to fill the screen for the rest of the animation. */
+.arcade-screen.zoom-expand canvas,
+.arcade-screen.zoom-expand .arcade-site-preview,
+.arcade-screen.zoom-expand .arcade-screen-label,
+.arcade-screen.zoom-expand .arcade-screen-glare {
+  transition: opacity 0.4s ease;
+  opacity: 0;
 }
 
 .arcade-screen canvas {
@@ -478,12 +490,6 @@ body.custom-cursor-active button {
   box-shadow: var(--glow-sm);
 }
 
-.intro-overlay.zooming .arcade-marquee,
-.intro-overlay.zooming .arcade-screen-frame,
-.intro-overlay.zooming .arcade-panel {
-  opacity: 0;
-}
-
 .intro-skip {
   position: absolute;
   right: 1.5rem;
@@ -502,10 +508,9 @@ body.custom-cursor-active button {
 }
 .intro-skip.visible { opacity: 1; }
 .intro-skip:hover { color: var(--cyan); border-color: var(--cyan); }
-.intro-overlay.zooming .intro-skip { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .arcade-cabinet, .intro-overlay { transition: none; }
+  .arcade-screen, .intro-overlay { transition: none; }
 }
 
 @keyframes blink { 50% { opacity: 0; } }
