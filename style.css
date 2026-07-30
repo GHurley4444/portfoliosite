@@ -1254,35 +1254,6 @@ body.custom-cursor-active button {
   animation: heroGradient 9s ease-in-out infinite;
 }
 
-/* Crosshair-in-a-ring reticle, the Tron-flyer motif already used on the
-   arcade panel's decal marks, reused here as a recurring accent next to
-   every major heading. A single pseudo-element: two thin bars plus a
-   radial-gradient ring, layered in one background shorthand instead of
-   needing extra DOM nodes -- so it applies uniformly across every page
-   without touching each heading's markup. Picks up whatever --accent
-   color is active on the containing .accent-* block (falls back to
-   cyan), the same variable .section-kicker's dot already uses. */
-.section-title::before,
-.case-section h2::before,
-.page-title::before {
-  content: '';
-  display: inline-block;
-  width: 22px; height: 22px;
-  margin-right: 10px;
-  vertical-align: -4px;
-  background:
-    linear-gradient(var(--accent, var(--cyan)), var(--accent, var(--cyan))) center / 100% 1.5px no-repeat,
-    linear-gradient(var(--accent, var(--cyan)), var(--accent, var(--cyan))) center / 1.5px 100% no-repeat,
-    radial-gradient(circle, transparent 6.5px, var(--accent, var(--cyan)) 7px, var(--accent, var(--cyan)) 8px, transparent 8.5px);
-  filter: drop-shadow(0 0 4px var(--accent-glow, rgba(55, 244, 255, 0.5)));
-  opacity: 0.85;
-}
-.page-title::before {
-  width: 32px; height: 32px;
-  margin-right: 14px;
-  vertical-align: -6px;
-}
-
 .section-lede {
   color: var(--text-dim);
   font-size: 1.15rem;
