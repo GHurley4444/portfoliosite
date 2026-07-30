@@ -253,6 +253,8 @@ function createGridEngine() {
   const MAX_ROUND_TICKS = 500; // safety net so a round can't stall forever
   const FLOOD_LIMIT = 80; // how far each bot "looks" when judging open space
   const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
+  const CUTOFF_LEAD = 7; // cells down a target's own lane a cutsOff bot aims to beat them to
+  const CUTOFF_ENGAGE_RANGE = 20; // only commit to a cutoff run this close in; otherwise just close distance normally
   const DANGER_SPACE_THRESHOLD = 22; // base danger threshold, scaled per-bot by dangerMultiplier
   const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
   const COLLISION_RISK_PENALTY = 35; // deterrent for stepping into an opponent's likely next cell
@@ -274,11 +276,16 @@ function createGridEngine() {
   //                     turning; low values read as weaving/erratic
   //   mistakeChance   — per-tick odds of taking the second-best safe option
   //                     instead of the best one, purely for human fallibility
+  //   cutsOff          — movie-style riders: instead of just closing distance
+  //                     on a target, they aim for a point well down the
+  //                     target's own lane and race to beat them there, so
+  //                     their trail lands across the target's path instead
+  //                     of trailing behind it.
   const PERSONALITIES = [
-    { name: 'HUNTER', aggression: [1.9, 2.3], dangerMultiplier: [0.75, 0.9], straightBonus: [2, 3], mistakeChance: [0.02, 0.035] },
-    { name: 'STALKER', aggression: [1.4, 1.8], dangerMultiplier: [1.0, 1.2], straightBonus: [3.5, 5], mistakeChance: [0.005, 0.015] },
-    { name: 'DRIFTER', aggression: [0.9, 1.3], dangerMultiplier: [0.9, 1.1], straightBonus: [0.5, 1.5], mistakeChance: [0.04, 0.06] },
-    { name: 'GUARDIAN', aggression: [0.5, 0.8], dangerMultiplier: [1.3, 1.6], straightBonus: [3, 4.5], mistakeChance: [0.005, 0.015] },
+    { name: 'HUNTER', aggression: [1.9, 2.3], dangerMultiplier: [0.75, 0.9], straightBonus: [2, 3], mistakeChance: [0.02, 0.035], cutsOff: true },
+    { name: 'STALKER', aggression: [1.4, 1.8], dangerMultiplier: [1.0, 1.2], straightBonus: [3.5, 5], mistakeChance: [0.005, 0.015], cutsOff: true },
+    { name: 'DRIFTER', aggression: [0.9, 1.3], dangerMultiplier: [0.9, 1.1], straightBonus: [0.5, 1.5], mistakeChance: [0.04, 0.06], cutsOff: false },
+    { name: 'GUARDIAN', aggression: [0.5, 0.8], dangerMultiplier: [1.3, 1.6], straightBonus: [3, 4.5], mistakeChance: [0.005, 0.015], cutsOff: false },
   ];
   const pickInRange = ([lo, hi]) => lo + Math.random() * (hi - lo);
 
@@ -323,6 +330,7 @@ function createGridEngine() {
       dangerMultiplier: pickInRange(p.dangerMultiplier),
       straightBonus: pickInRange(p.straightBonus),
       mistakeChance: pickInRange(p.mistakeChance),
+      cutsOff: p.cutsOff,
     };
   }
 
@@ -417,14 +425,37 @@ function createGridEngine() {
   function nearestTarget(bot, alive) {
     let best = null;
     let bestDist = Infinity;
+    let nearestRaw = Infinity;
     alive.forEach((other) => {
       if (other === bot) return;
+      const rawDist = Math.abs(other.x - bot.x) + Math.abs(other.y - bot.y);
+      if (rawDist < nearestRaw) nearestRaw = rawDist;
+
       const ahead = DIRS[other.dir];
       const tx = other.x + ahead.x * PREDICT_AHEAD;
       const ty = other.y + ahead.y * PREDICT_AHEAD;
       const dist = Math.abs(tx - bot.x) + Math.abs(ty - bot.y);
       if (dist < bestDist) { bestDist = dist; best = { x: tx, y: ty }; }
     });
+
+    // Movie-style riders don't just tail the nearest bike — once they're
+    // close enough to actually make the run, they aim for a point well
+    // down the target's own lane and race to plant a wall across it,
+    // cutting the target off instead of following behind them.
+    if (bot.cutsOff && nearestRaw <= CUTOFF_ENGAGE_RANGE) {
+      let cutBest = null;
+      let cutBestDist = Infinity;
+      alive.forEach((other) => {
+        if (other === bot) return;
+        const ahead = DIRS[other.dir];
+        const tx = other.x + ahead.x * CUTOFF_LEAD;
+        const ty = other.y + ahead.y * CUTOFF_LEAD;
+        const dist = Math.abs(tx - bot.x) + Math.abs(ty - bot.y);
+        if (dist < cutBestDist) { cutBestDist = dist; cutBest = { x: tx, y: ty }; }
+      });
+      if (cutBest) return cutBest;
+    }
+
     return best;
   }
 
