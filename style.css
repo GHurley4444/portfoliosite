@@ -391,17 +391,37 @@ body.custom-cursor-active button {
 .bg-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .secret-trigger {
-  background: none;
-  border: none;
-  color: rgba(55, 244, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-mono);
   font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--cyan-soft);
+  background: rgba(55, 244, 255, 0.07);
+  border: 1px solid rgba(55, 244, 255, 0.3);
+  border-radius: 20px;
+  padding: 0.4rem 0.9rem;
+  margin-left: 0.6em;
   cursor: pointer;
-  padding: 0 2px;
   vertical-align: middle;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease, transform 0.2s ease;
 }
 
-.secret-trigger:hover { color: var(--cyan); text-shadow: var(--glow-sm); }
+.secret-trigger:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: var(--glow-sm);
+  transform: translateY(-1px);
+}
+
+.secret-trigger-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+  animation: blink 1.4s step-start infinite;
+}
 
 /* ===================== Secret game HUD ===================== */
 /* Small corner panel, not a full-screen takeover — the point is the game
