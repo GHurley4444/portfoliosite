@@ -68,7 +68,7 @@ function setupTypewriter() {
 const SCRAMBLE_CHARS = '!<>-_\\/[]{}=+*^?#ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
 function scrambleText(el, finalText) {
-  const duration = Math.min(Math.max(finalText.length * 14, 400), 1400);
+  const duration = Math.min(Math.max(finalText.length * 50, 1200), 3600);
   const startTime = performance.now();
   const length = finalText.length;
 
@@ -343,14 +343,16 @@ function createGridEngine() {
     return spawnBot(id, color, x, y, dir);
   }
 
-  // The four starting points form a "+" around the arena center, each
-  // runner facing outward along its arm.
+  // The four starting points form a "+" around the arena center, out on
+  // the tips of each arm — but every runner faces back inward, so the
+  // moment the countdown ends all four converge on the middle instead of
+  // riding out to the walls first.
   function crossSpawn(id, color, armDir) {
     const cx = Math.floor(cols / 2);
     const cy = Math.floor(rows / 2);
     const arm = Math.max(Math.min(Math.floor(Math.min(cols, rows) / 2) - 3, 18), 6);
     const d = DIRS[armDir];
-    return spawnBot(id, color, cx + d.x * arm, cy + d.y * arm, armDir);
+    return spawnBot(id, color, cx + d.x * arm, cy + d.y * arm, OPPOSITE[armDir]);
   }
 
   function resize() {
