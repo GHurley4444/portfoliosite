@@ -113,10 +113,11 @@ function startMiniTronPreview(canvas) {
 //      screen, then cross-fades into a small mockup of the site itself
 //      (same fonts/gradient/logo, not a live copy -- see arcadeSitePreview
 //      comment below) -- reads as "the site loading up" on the screen.
-//   2. After a hold, the overlay is removed outright -- a hard cut --
-//      and that hard cut chains straight into runPageRevealSequence()
-//      (below), so the real page underneath does its own top-to-bottom
-//      load-in wipe right as the cabinet disappears.
+//   2. After a hold, the cabinet fades out (a plain opacity transition,
+//      not a zoom/transform), then runPageRevealSequence() (below)
+//      kicks off on the real page underneath -- so the cabinet is gone
+//      before the top-to-bottom wipe starts, rather than the wipe
+//      starting while it's still visible.
 // Returns true if the intro actually ran (first visit this session, not
 // reduced-motion), false if it was skipped outright -- callers use that
 // to know whether they still need to trigger the page-reveal themselves.
@@ -151,6 +152,8 @@ function runIntroSequence() {
     if (sitePreview) sitePreview.classList.add('visible');
   }
 
+  const FADE_MS = 500;
+
   let finished = false;
   function finish() {
     if (finished) return;
@@ -167,8 +170,16 @@ function runIntroSequence() {
     clearTimeout(finishTimer);
     if (stopPreview) stopPreview();
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
-    overlay.remove(); // hard cut -- no fade, no zoom, straight to the page
-    runPageRevealSequence(); // ...then the real page does its own load-in wipe
+
+    // Fade the cabinet out (plain opacity transition, see .fade-out in
+    // style.css) instead of just yanking it away -- then remove it and
+    // hand off to the page-reveal wipe only once it's actually gone, so
+    // the two effects don't overlap.
+    overlay.classList.add('fade-out');
+    setTimeout(() => {
+      overlay.remove();
+      runPageRevealSequence();
+    }, FADE_MS);
   }
 
   function onKey() { finish(); }

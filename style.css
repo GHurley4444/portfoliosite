@@ -262,11 +262,11 @@ body.custom-cursor-active button {
 /* ===================== Arcade intro (replaces the old boot log) ===================== */
 /* An arcade cabinet with a tiny live Tron preview on its screen, which
    cross-fades into a small site mockup and holds there for a few
-   seconds -- then runIntroSequence() in script.js just removes the
-   overlay outright. No fade/zoom/transition: earlier versions tried a
-   zoom-through-the-screen effect across several iterations, but it was
-   dropped by request in favor of a plain hard cut straight to the real
-   page, which is simpler and has nothing left to go wrong. */
+   seconds -- then runIntroSequence() in script.js fades the whole
+   overlay out (.fade-out below, plain opacity, no zoom/transform: an
+   earlier version tried a zoom-through-the-screen effect across several
+   iterations, dropped by request for something simpler) before handing
+   off to the page-reveal wipe on the real page underneath. */
 .intro-overlay {
   position: fixed;
   inset: 0;
@@ -276,6 +276,12 @@ body.custom-cursor-active button {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  transition: opacity 0.5s ease;
+}
+
+.intro-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .arcade-cabinet {
