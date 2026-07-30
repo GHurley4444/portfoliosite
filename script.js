@@ -174,15 +174,15 @@ function runIntroSequence() {
     // Start the cabinet scaling up AND the overlay fading out at the same
     // moment, instead of one after the other -- the site needs to become
     // visible THROUGH the growing screen as it happens, not pop in only
-    // after the zoom already finished. The overlay (0.6s fade) resolves
-    // faster than the cabinet scale (1s), so the site is fully interactive
-    // partway through the zoom while the giant, dissolving screen is still
-    // visually finishing its motion on top of it.
+    // after the zoom already finished. Cabinet scale is ease-out over
+    // 0.65s (matched to the overlay's 0.6s fade) so the zoom motion is
+    // front-loaded and fully visible before the layer disappears --
+    // the old back-loaded curve hid ~94% of the motion behind the fade.
     overlay.classList.add('zooming');
     overlay.classList.add('hidden');
     if (stopPreview) stopPreview();
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
-    setTimeout(() => overlay.remove(), 1050);
+    setTimeout(() => overlay.remove(), 750);
   }
 
   function onKey() { zoomIn(); }
