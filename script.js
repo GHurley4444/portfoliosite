@@ -253,8 +253,7 @@ function createGridEngine() {
   const MAX_ROUND_TICKS = 500; // safety net so a round can't stall forever
   const FLOOD_LIMIT = 80; // how far each bot "looks" when judging open space
   const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
-  const STRAIGHT_BONUS = 3; // small preference for not zig-zagging every tick
-  const DANGER_SPACE_THRESHOLD = 22; // if even the roomiest option is this tight, it's real danger
+  const DANGER_SPACE_THRESHOLD = 22; // base danger threshold, scaled per-bot by dangerMultiplier
   const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
   const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
@@ -262,6 +261,25 @@ function createGridEngine() {
   const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   const TURNS = { up: ['left', 'right'], down: ['left', 'right'], left: ['up', 'down'], right: ['up', 'down'] };
   const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
+
+  // Four fixed personalities, one per color slot, so the same color always
+  // plays the same way round to round. Each trait is a [low, high] range —
+  // still some run-to-run variance within a personality, just bounded to a
+  // range that reads as that character rather than fully random.
+  //   aggression      — how hard it weighs closing distance on a target
+  //   dangerMultiplier— scales the "am I cornered" threshold; higher = backs
+  //                     off from a chase sooner, lower = pushes its luck
+  //   straightBonus   — preference for continuing straight vs. opportunistic
+  //                     turning; low values read as weaving/erratic
+  //   mistakeChance   — per-tick odds of taking the second-best safe option
+  //                     instead of the best one, purely for human fallibility
+  const PERSONALITIES = [
+    { name: 'HUNTER', aggression: [1.9, 2.3], dangerMultiplier: [0.75, 0.9], straightBonus: [2, 3], mistakeChance: [0.02, 0.035] },
+    { name: 'STALKER', aggression: [1.4, 1.8], dangerMultiplier: [1.0, 1.2], straightBonus: [3.5, 5], mistakeChance: [0.005, 0.015] },
+    { name: 'DRIFTER', aggression: [0.9, 1.3], dangerMultiplier: [0.9, 1.1], straightBonus: [0.5, 1.5], mistakeChance: [0.04, 0.06] },
+    { name: 'GUARDIAN', aggression: [0.5, 0.8], dangerMultiplier: [1.3, 1.6], straightBonus: [3, 4.5], mistakeChance: [0.005, 0.015] },
+  ];
+  const pickInRange = ([lo, hi]) => lo + Math.random() * (hi - lo);
 
   let cols = 0;
   let rows = 0;
@@ -290,11 +308,21 @@ function createGridEngine() {
   }
 
   function spawnBot(id, color, x, y, dir) {
-    // Per-bot aggression gives each one a slightly different personality —
-    // some chase harder, some play it a bit safer — instead of identical
-    // decision-makers.
-    const aggression = 1 + Math.random() * 0.8;
-    return { id, color, x, y, dir, alive: true, trail: [{ x, y }], aggression };
+    const p = PERSONALITIES[id % PERSONALITIES.length];
+    return {
+      id,
+      color,
+      x,
+      y,
+      dir,
+      alive: true,
+      trail: [{ x, y }],
+      personality: p.name,
+      aggression: pickInRange(p.aggression),
+      dangerMultiplier: pickInRange(p.dangerMultiplier),
+      straightBonus: pickInRange(p.straightBonus),
+      mistakeChance: pickInRange(p.mistakeChance),
+    };
   }
 
   function randomSpawn(id, color) {
@@ -424,25 +452,32 @@ function createGridEngine() {
     if (!options.length) return bot.dir;
 
     const maxSpace = Math.max(...options.map((o) => o.space));
-    const inDanger = maxSpace < DANGER_SPACE_THRESHOLD;
+    const inDanger = maxSpace < DANGER_SPACE_THRESHOLD * bot.dangerMultiplier;
     const aggressionScale = inDanger ? ESCAPE_AGGRESSION_CUT : 1;
 
-    let bestDir = null;
-    let bestScore = -Infinity;
-
-    options.forEach(({ dir, nx, ny, space }) => {
+    const scored = options.map(({ dir, nx, ny, space }) => {
       let score = space;
-      if (dir === bot.dir) score += STRAIGHT_BONUS;
+      if (dir === bot.dir) score += bot.straightBonus;
       if (target) {
         const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
         score -= dist * bot.aggression * aggressionScale;
       }
       score += Math.random() * 0.5; // light jitter so ties don't look robotic
-
-      if (score > bestScore) { bestScore = score; bestDir = dir; }
+      return { dir, score };
     });
 
-    return bestDir;
+    scored.sort((a, b) => b.score - a.score);
+
+    // Rare, personality-scaled misjudgment: take the second-best safe
+    // option instead of the actual best one. It's still a live, reasonable
+    // choice — never one of the moves that were already filtered out for
+    // being an immediate crash — just not the optimal one, the way a
+    // person might second-guess a call under pressure.
+    if (scored.length > 1 && Math.random() < bot.mistakeChance) {
+      return scored[1].dir;
+    }
+
+    return scored[0].dir;
   }
 
   function triggerCrash(x, y, color) {
