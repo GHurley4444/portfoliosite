@@ -489,6 +489,9 @@ function createGridEngine() {
   const KILL_OPPORTUNITY_RANGE = 6; // "genuinely close" -- raw Manhattan distance to the nearest real rider (not the lead-projected aim point) inside which a closing move counts as a live kill opportunity
   const KILL_OPPORTUNITY_BONUS = 14; // extra pull toward a real, nearby opponent when closing the gap doesn't cost the bot its own safety margin -- deliberately NOT scaled down for low-aggression personalities, so every rider takes a free/safe kill instead of drifting off to pad its own open space for no reason
   const RIVAL_TRAIL_PENALTY = 9; // per side, discourages settling into a long parallel "conga line" alongside another rider's trail -- see the hug-avoidance comment in chooseDirection(). Needs to be large enough to actually outweigh a normal aggression-driven pull toward that same rider (a few points wouldn't move the needle against personalities with real aggression), without approaching danger/kill-opportunity scale.
+  const STRAIGHT_MOMENTUM_STEP = 0.6; // extra straight-continuation bonus per consecutive tick already spent heading the same way, on top of the personality's flat straightBonus
+  const STRAIGHT_MOMENTUM_CAP = 10; // ceiling on the momentum bonus above -- keeps a long straight run from becoming so "sticky" it ignores a real danger or kill read
+  const TARGET_SWITCH_MARGIN = 6; // an already-locked chase target only gets dropped for a different opponent that's at least this much closer -- see the sticky-lock comment in nearestTarget()
   const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
@@ -562,6 +565,8 @@ function createGridEngine() {
       straightBonus: pickInRange(p.straightBonus),
       mistakeChance: pickInRange(p.mistakeChance),
       cutsOff: p.cutsOff,
+      straightStreak: 0, // consecutive ticks already spent heading bot.dir -- feeds the momentum bonus in chooseDirection()
+      lockId: null, // id of the opponent this bot is currently chasing -- see the sticky-lock comment in nearestTarget()
     };
   }
 
@@ -671,10 +676,26 @@ function createGridEngine() {
   // than straight at them, so bots read as trying to cut a path off
   // instead of just tailgating. During the playable game, the player is
   // just another entry in `alive`, so bots hunt it exactly the same way.
+  //
+  // Sticky target lock: with several riders on the grid, "closest projected
+  // opponent" can flip from one rider to another between two ticks that are
+  // otherwise nearly identical -- both were about equally close, and a tiny
+  // change in either rider's heading was enough to flip which one's aim
+  // point reads as nearer. Recomputing the pull toward a totally different
+  // point every single tick is what actually drove the tight, robotic
+  // "staircase" pattern: two bots each re-aiming at a moving, occasionally-
+  // swapped target every tick can find themselves alternating x/y priority
+  // in lockstep for dozens of ticks straight. Keeping the same locked-on
+  // opponent (still re-projected fresh off their current position/heading
+  // every tick, so the pull itself still tracks a moving target normally)
+  // unless someone else is now meaningfully closer removes that whiplash
+  // without making the chase noticeably less responsive.
   function nearestTarget(bot, alive) {
     let best = null;
     let bestDist = Infinity;
     let nearestRaw = Infinity;
+    let locked = null;
+    let lockedDist = Infinity;
     alive.forEach((other) => {
       if (other === bot) return;
       const rawDist = Math.abs(other.x - bot.x) + Math.abs(other.y - bot.y);
@@ -684,8 +705,12 @@ function createGridEngine() {
       const tx = other.x + ahead.x * PREDICT_AHEAD;
       const ty = other.y + ahead.y * PREDICT_AHEAD;
       const dist = Math.abs(tx - bot.x) + Math.abs(ty - bot.y);
-      if (dist < bestDist) { bestDist = dist; best = { x: tx, y: ty }; }
+      if (dist < bestDist) { bestDist = dist; best = { x: tx, y: ty, id: other.id }; }
+      if (other.id === bot.lockId) { locked = { x: tx, y: ty, id: other.id }; lockedDist = dist; }
     });
+
+    const chosen = locked && lockedDist <= bestDist + TARGET_SWITCH_MARGIN ? locked : best;
+    bot.lockId = chosen ? chosen.id : null;
 
     // Movie-style riders don't just tail the nearest bike — once they're
     // close enough to actually make the run, they aim for a point well
@@ -705,7 +730,7 @@ function createGridEngine() {
       if (cutBest) return cutBest;
     }
 
-    return best;
+    return chosen;
   }
 
   // Every tick, for every bot: look at each direction it could actually
@@ -786,7 +811,23 @@ function createGridEngine() {
       // actually win the score" instead of a close-second chase option
       // narrowly edging out the safer one.
       let score = inDanger ? space * DANGER_SPACE_BOOST : space;
-      if (dir === bot.dir) score += bot.straightBonus;
+      // Momentum: the longer a bot has already been committed to this
+      // heading, the stronger its preference to keep going. Without this,
+      // a razor-thin, tick-to-tick tie in the aggression pull toward a
+      // diagonally-offset target (reducing x vs. reducing y both look
+      // equally good) has nothing decisive backing "just keep going the
+      // way I was going," so the tie gets broken by near-nothing (a hair
+      // of jitter) and can flip back and forth for dozens of ticks straight
+      // -- the fine up-right-up-right "staircase" look. A growing bonus for
+      // an already-established heading gives continuing a real, increasing
+      // edge, so once a bot commits to an axis it stays committed instead
+      // of re-litigating the choice every single tick. Capped well below
+      // danger/kill-opportunity scale so it never overrides an actual
+      // safety or kill read -- it only settles ties that were never
+      // meaningful in the first place.
+      if (dir === bot.dir) {
+        score += bot.straightBonus + Math.min(bot.straightStreak * STRAIGHT_MOMENTUM_STEP, STRAIGHT_MOMENTUM_CAP);
+      }
       if (target) {
         const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
         score -= dist * bot.aggression * aggressionScale;
@@ -927,6 +968,9 @@ function createGridEngine() {
         return;
       }
 
+      // Feeds the momentum bonus in chooseDirection(): how many ticks in a
+      // row (including this one) has this bot held the same heading.
+      m.bot.straightStreak = m.dir === m.bot.dir ? m.bot.straightStreak + 1 : 0;
       m.bot.dir = m.dir;
       m.bot.x = m.nx;
       m.bot.y = m.ny;
