@@ -527,7 +527,7 @@ function createGridEngine() {
   let roundTicks = 0;
   let running = false; // is the canvas mounted/active at all
   let paused = false; // frozen between rounds, or during a prompt/countdown
-  let dpr = Math.max(window.devicePixelRatio || 1, 1);
+  let dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2); // overwritten by resize() before first draw; kept consistent with it
   let tickHandle = null;
   let tickRunning = false;
   let rafRunning = false;
@@ -595,7 +595,14 @@ function createGridEngine() {
     // now always matches exactly what's actually visible.
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
-    dpr = Math.max(window.devicePixelRatio || 1, 1);
+    // Capped at 2 rather than left uncapped: a lot of phones report a
+    // devicePixelRatio of 3, which would otherwise triple this canvas's
+    // backing-store resolution (and every clearRect/stroke/fill cost with
+    // it) on exactly the class of device with the weakest GPU to pay for
+    // it. This is a decorative ambient background, not the page's actual
+    // content, so a slightly softer line on the newest phones is a fair
+    // trade for meaningfully less per-tick work.
+    dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
     canvas.width = viewportWidth * dpr;
     canvas.height = viewportHeight * dpr;
     canvas.style.width = `${viewportWidth}px`;
