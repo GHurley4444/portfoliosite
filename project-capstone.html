@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cybersecurity Capstone // Garrett Hurley</title>
+<meta name="description" content="Towson University Cybersecurity Capstone — a full Active Directory lab, an end-to-end simulated penetration test, and a CVSS-scored report, alongside hardening and monitoring Windows Server, Windows 10, and Ubuntu Linux systems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo"><span class="logo-bracket" aria-hidden="true">[</span>GH<span class="logo-dot">_</span>SYS<span class="logo-bracket" aria-hidden="true">]</span></a>
+    <nav class="main-nav">
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <div class="header-actions">
+      <button class="bg-toggle" id="bgToggle" type="button" aria-pressed="true" aria-label="Toggle Tron background">
+        <span class="bg-toggle-dot"></span>TRON
+      </button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-banner">
+    <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
+    <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // CAPSTONE</p>
+    <h1 class="page-title" data-scramble-load>Cybersecurity Capstone</h1>
+    <p class="page-desc">A team-based cybersecurity capstone at Towson University — standing up a full Active Directory lab, running a simulated penetration test against it end to end, and delivering a formal CVSS-scored report, alongside hardening and defending Windows Server, Windows 10, and Ubuntu Linux systems.</p>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+
+      <a href="projects.html" class="back-link">&larr; ALL PROJECTS</a>
+
+      <div class="case-section accent-violet reveal">
+        <h2>The Exercise</h2>
+        <p>Towson University's Cybersecurity Capstone (Spring 2025) put teams in charge of an enterprise-style environment spanning Windows Server, Windows 10, and Ubuntu Linux. The build stood up a full Active Directory lab, then ran a simulated penetration test against it end to end — reconnaissance through exploitation — closing with a formal, CVSS-scored report, alongside the defensive side: keeping services correctly configured and monitored against the vulnerabilities that assessment surfaced.</p>
+        <div class="case-todo">
+          <strong>TODO — fill in:</strong> exact competition format (scored attack-defense round? red team scoring live during the event? a set number of injects/tasks?), team size and how work was split, and the overall timeline (one exercise day vs. a semester-long build).
+        </div>
+      </div>
+
+      <div class="case-section accent-cyan reveal">
+        <h2>What I Worked On</h2>
+        <div class="feature-grid">
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Service Hardening</h3>
+            <p>Secured SSH, Apache, and SMB across the environment — closing default configurations and unnecessary exposure before they could be used as an entry point.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9678;</span>
+            <h3>Monitoring &amp; Detection</h3>
+            <p>Watched the environment with Graylog and Wireshark, correlating log activity and packet captures to catch what was actually happening on the network in real time.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9635;</span>
+            <h3>Active Directory Lab</h3>
+            <p>Stood up a full AD environment as the target for the exercise — domain, group policy, and the kind of realistic misconfigurations that make AD such a common attack surface in the real world.</p>
+          </div>
+          <div class="feature-card accent-blue">
+            <span class="feature-icon">&#9889;</span>
+            <h3>Offensive Assessment</h3>
+            <p>Ran a simulated penetration test end to end with Kali Linux and Nmap — reconnaissance through exploitation — against the team's own AD environment.</p>
+          </div>
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9679;</span>
+            <h3>CVSS-Scored Reporting</h3>
+            <p>Closed the assessment with a formal report: each finding scored by CVSS severity and paired with a concrete remediation — the deliverable a real client engagement would expect.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Enterprise System Administration</h3>
+            <p>Managed Windows Server, Windows 10, and Ubuntu Linux hosts side by side, including firewall rules and the database services running on top of them.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-section accent-amber reveal">
+        <h2>Findings &amp; Fixes</h2>
+        <p>The specific findings from the CVSS-scored report belong here — this is the section that turns "I did a capstone" into proof you can actually run an assessment and write it up like a professional would.</p>
+        <div class="case-todo">
+          <strong>TODO — replace with 2&ndash;4 real findings</strong> straight out of your report, formatted like the spec list below. For each: what the vulnerability was, its CVSS score/severity, how it was found (recon step, tool, technique), and the remediation you recommended. A redacted screenshot or excerpt from the actual report would work well here.
+        </div>
+        <ul class="spec-list">
+          <li><strong>EXAMPLE FINDING &mdash; CVSS [X.X]</strong>[Replace: e.g. "Kerberoastable service account with a weak password — cracked offline, remediated with a managed service account + strong passphrase."]</li>
+          <li><strong>EXAMPLE FINDING &mdash; CVSS [X.X]</strong>[Replace: e.g. "SMB share allowed anonymous listing — closed via [specific config change]."]</li>
+          <li><strong>EXAMPLE FINDING &mdash; CVSS [X.X]</strong>[Replace: e.g. "Nmap scan surfaced an outdated Apache module — patched and re-scanned to confirm."]</li>
+        </ul>
+      </div>
+
+      <div class="case-section accent-blue reveal">
+        <h2>Tech Stack</h2>
+        <div class="tech-tags">
+          <span>Windows Server</span>
+          <span>Windows 10</span>
+          <span>Ubuntu Linux</span>
+          <span>Active Directory / GPO</span>
+          <span>Kali Linux</span>
+          <span>Nmap</span>
+          <span>Wireshark</span>
+          <span>Graylog</span>
+          <span>CVSS / CVE</span>
+          <span>Firewalls</span>
+          <span>SSH</span>
+          <span>Apache</span>
+          <span>SMB</span>
+          <span>SQL</span>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
+          <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy. <button class="secret-trigger" id="secretTrigger" type="button" aria-label="Play the light-cycle game"><span class="secret-trigger-dot"></span>PLAY THE GRID</button></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

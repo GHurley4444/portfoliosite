@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NCAE Cyber Games // Garrett Hurley</title>
+<meta name="description" content="NCAE-C Cyber Games — competing to identify vulnerabilities and solve live cybersecurity challenges under competition conditions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo"><span class="logo-bracket" aria-hidden="true">[</span>GH<span class="logo-dot">_</span>SYS<span class="logo-bracket" aria-hidden="true">]</span></a>
+    <nav class="main-nav">
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <div class="header-actions">
+      <button class="bg-toggle" id="bgToggle" type="button" aria-pressed="true" aria-label="Toggle Tron background">
+        <span class="bg-toggle-dot"></span>TRON
+      </button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-banner">
+    <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
+    <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // NCAE CYBER GAMES</p>
+    <h1 class="page-title" data-scramble-load>NCAE Cyber Games</h1>
+    <p class="page-desc">Competing in the National Centers of Academic Excellence in Cybersecurity (NCAE-C) Cyber Games — identifying vulnerabilities and solving live challenges under competition conditions.</p>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+
+      <a href="projects.html" class="back-link">&larr; ALL PROJECTS</a>
+
+      <div class="case-section accent-blue reveal">
+        <h2>The Competition</h2>
+        <p>The NCAE-C Cyber Games (Spring 2025) put teams up against a live set of cybersecurity challenges, working under competition conditions to find vulnerabilities, work through problems, and coordinate as a team against the clock.</p>
+        <div class="case-todo">
+          <strong>TODO — fill in:</strong> the exact format (jeopardy-style CTF with point categories, or attack-defense?), team name/size and your role on it, and how the team placed or scored.
+        </div>
+      </div>
+
+      <div class="case-section accent-violet reveal">
+        <h2>Skills Applied</h2>
+        <div class="feature-grid">
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Vulnerability Identification</h3>
+            <p>Worked through live systems and challenge sets to find the flaw each one was built around, under real time pressure.</p>
+          </div>
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9678;</span>
+            <h3>Problem Solving</h3>
+            <p>Broke down unfamiliar challenges into testable pieces rather than guessing — the same instinct that carries over into real incident response.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9679;</span>
+            <h3>Team Coordination</h3>
+            <p>Split challenges across the team by strength and kept everyone moving instead of stacking up on the same problem.</p>
+          </div>
+        </div>
+        <div class="case-todo">
+          <strong>TODO — replace with the real challenge categories</strong> you actually worked (e.g. web exploitation, forensics, cryptography, network analysis, reverse engineering) once confirmed — the cards above are placeholders built from the general skills on your resume, not specific categories.
+        </div>
+      </div>
+
+      <div class="case-section accent-amber reveal">
+        <h2>Standout Challenge</h2>
+        <p>The single best challenge to write up in detail — the one that best shows how you actually think through a problem, not just that you solved it.</p>
+        <div class="case-todo">
+          <strong>TODO — write up one specific challenge:</strong> what category it was in, what the problem looked like at first, the approach that cracked it, and the tool or technique that ended up mattering most. A screenshot of the tool output or your notes would work well here.
+        </div>
+      </div>
+
+      <div class="case-section accent-cyan reveal">
+        <h2>Tech Stack</h2>
+        <p class="page-desc" style="margin: 0 0 1rem; text-align: left; max-width: 780px;">Starter guess based on your general toolkit — confirm and edit to match what you actually reached for during the competition.</p>
+        <div class="tech-tags">
+          <span>Kali Linux</span>
+          <span>Nmap</span>
+          <span>Wireshark</span>
+          <span>Burp Suite</span>
+          <span>John the Ripper</span>
+          <span>Netcat</span>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
+          <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy. <button class="secret-trigger" id="secretTrigger" type="button" aria-label="Play the light-cycle game"><span class="secret-trigger-dot"></span>PLAY THE GRID</button></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
