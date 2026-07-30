@@ -467,8 +467,9 @@ function createGridEngine() {
   const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
   const CUTOFF_LEAD = 7; // cells down a target's own lane a cutsOff bot aims to beat them to
   const CUTOFF_ENGAGE_RANGE = 20; // only commit to a cutoff run this close in; otherwise just close distance normally
-  const DANGER_SPACE_THRESHOLD = 22; // base danger threshold, scaled per-bot by dangerMultiplier
+  const DANGER_SPACE_THRESHOLD = 32; // base danger threshold, scaled per-bot by dangerMultiplier -- raised from 22 so bots register a shrinking pocket earlier, with more ticks left to route out of it instead of noticing only once it's nearly sealed
   const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
+  const DANGER_SPACE_BOOST = 1.6; // extra multiplier on raw open space once in danger, on top of the aggression cut -- makes the safest option win more decisively instead of a close-second chase option narrowly outscoring it
   const COLLISION_RISK_PENALTY = 35; // deterrent for stepping into an opponent's likely next cell
   const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
@@ -724,14 +725,24 @@ function createGridEngine() {
       });
 
     const scored = options.map(({ dir, nx, ny, space }) => {
-      let score = space;
+      // In danger, raw open space gets an extra multiplier on top of the
+      // aggression cut below -- not just "chase less", but "let survival
+      // actually win the score" instead of a close-second chase option
+      // narrowly edging out the safer one.
+      let score = inDanger ? space * DANGER_SPACE_BOOST : space;
       if (dir === bot.dir) score += bot.straightBonus;
       if (target) {
         const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
         score -= dist * bot.aggression * aggressionScale;
       }
       const headOnRisk = incoming.some((p) => p.x === nx && p.y === ny);
-      if (headOnRisk) score -= COLLISION_RISK_PENALTY / bot.aggression;
+      // Reckless (high-aggression) personalities normally shrug off head-on
+      // risk (penalty shrinks as aggression grows), which is the "two
+      // riders both committed to the same last-open cell" crash. Once
+      // actually in danger, apply the full penalty regardless of
+      // aggression -- surviving a tight spot should outweigh finishing a
+      // chase, for every personality.
+      if (headOnRisk) score -= inDanger ? COLLISION_RISK_PENALTY : COLLISION_RISK_PENALTY / bot.aggression;
       score += Math.random() * 0.5; // light jitter so ties don't look robotic
       return { dir, score };
     });
@@ -742,8 +753,11 @@ function createGridEngine() {
     // option instead of the actual best one. It's still a live, reasonable
     // choice — never one of the moves that were already filtered out for
     // being an immediate crash — just not the optimal one, the way a
-    // person might second-guess a call under pressure.
-    if (scored.length > 1 && Math.random() < bot.mistakeChance) {
+    // person might second-guess a call under pressure. Suppressed while
+    // in danger -- that's exactly the moment a real "huh, let me
+    // reconsider" second-guess is least affordable, and it was a direct
+    // contributor to otherwise-avoidable wall/corner deaths.
+    if (!inDanger && scored.length > 1 && Math.random() < bot.mistakeChance) {
       return scored[1].dir;
     }
 
