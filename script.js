@@ -488,6 +488,7 @@ function createGridEngine() {
   const COLLISION_RISK_PENALTY = 35; // deterrent for stepping into an opponent's likely next cell
   const KILL_OPPORTUNITY_RANGE = 6; // "genuinely close" -- raw Manhattan distance to the nearest real rider (not the lead-projected aim point) inside which a closing move counts as a live kill opportunity
   const KILL_OPPORTUNITY_BONUS = 14; // extra pull toward a real, nearby opponent when closing the gap doesn't cost the bot its own safety margin -- deliberately NOT scaled down for low-aggression personalities, so every rider takes a free/safe kill instead of drifting off to pad its own open space for no reason
+  const RIVAL_TRAIL_PENALTY = 9; // per side, discourages settling into a long parallel "conga line" alongside another rider's trail -- see the hug-avoidance comment in chooseDirection(). Needs to be large enough to actually outweigh a normal aggression-driven pull toward that same rider (a few points wouldn't move the needle against personalities with real aggression), without approaching danger/kill-opportunity scale.
   const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
@@ -812,6 +813,32 @@ function createGridEngine() {
       // aggression -- surviving a tight spot should outweigh finishing a
       // chase, for every personality.
       if (headOnRisk) score -= inDanger ? COLLISION_RISK_PENALTY : COLLISION_RISK_PENALTY / bot.aggression;
+
+      // Discourage settling into a long parallel "conga line" alongside
+      // another rider's trail. Check the two cells perpendicular to this
+      // candidate's heading (not ahead/behind -- TURNS[dir] is exactly the
+      // pair of axes perpendicular to dir) for another bot's trail. Two
+      // riders that keep matching each other's turns while gliding side by
+      // side can each end up boxing the other in over time -- every trail
+      // laid down alongside the other narrows both their options at once
+      // -- until one of them reaches the arena edge with no legal turn
+      // left and has to go straight into the wall. A flat, modest penalty
+      // for riding right alongside a *rival's* trail (own trail doesn't
+      // count -- hugging your own line is normal) barely registers in open
+      // space, but is enough to give both sides a standing reason to peel
+      // apart long before either one is actually boxed in.
+      let rivalHug = 0;
+      TURNS[dir].forEach((side) => {
+        const sd = DIRS[side];
+        const sx = nx + sd.x;
+        const sy = ny + sd.y;
+        if (inBounds(sx, sy) && grid[sy] && grid[sy][sx]) {
+          const neighborId = grid[sy][sx] - 1;
+          if (neighborId !== bot.id) rivalHug += RIVAL_TRAIL_PENALTY;
+        }
+      });
+      score -= rivalHug;
+
       score += Math.random() * 0.5; // light jitter so ties don't look robotic
       return { dir, score };
     });
