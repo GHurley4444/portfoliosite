@@ -306,6 +306,15 @@ body.custom-cursor-active button {
   pointer-events: none;
 }
 
+/* Set on <html> by the blocking inline script in <head>, before this
+   element is ever painted, on repeat visits (sessionStorage already has
+   gh_intro_seen) or reduced-motion. Keeps the overlay's first frame
+   hidden instead of flashing full-viewport opaque, then getting torn
+   down once script.js finally loads and runs at the end of body. */
+.no-intro .intro-overlay {
+  display: none;
+}
+
 .arcade-cabinet {
   width: min(78vw, 380px);
   --arcade-red: #ff4d5e;
