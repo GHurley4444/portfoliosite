@@ -259,37 +259,169 @@ body.custom-cursor-active button {
   opacity: 0;
 }
 
-/* ===================== Boot overlay ===================== */
-.boot-overlay {
+/* ===================== Arcade intro (replaces the old boot log) ===================== */
+/* An arcade cabinet with a tiny live Tron preview on its screen, held for
+   ~2s, then the whole cabinet scales up centered exactly on the screen
+   (transform-origin set in JS from the screen's real bounding box) while
+   the bezel/marquee/panel fade out and the real site cross-fades in
+   underneath -- reads as diving through the screen into the site. */
+.intro-overlay {
   position: fixed;
   inset: 0;
   z-index: 999;
   background: #010509;
-  color: var(--cyan);
-  font-family: var(--font-mono);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
   transition: opacity 0.6s ease, visibility 0.6s ease;
+  overflow: hidden;
 }
 
-.boot-overlay.hidden {
+.intro-overlay.hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-.boot-text {
-  white-space: pre-wrap;
-  font-size: 0.95rem;
-  max-width: 640px;
-  text-shadow: var(--glow-sm);
+.arcade-cabinet {
+  width: min(78vw, 380px);
+  transition: transform 1s cubic-bezier(0.7, 0, 0.84, 0);
+  will-change: transform;
 }
 
-.boot-text::after {
-  content: '\2588';
+.intro-overlay.zooming .arcade-cabinet {
+  transform: scale(16);
+}
+
+.arcade-marquee {
+  background: linear-gradient(180deg, #12202f, #0a141f);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  transition: opacity 0.35s ease;
+}
+.arcade-marquee span {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 0.3em;
+  font-size: 0.85rem;
+  text-shadow: var(--glow-md);
+}
+
+.arcade-screen-frame {
+  background: linear-gradient(160deg, #171f2b, #0a0f16);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 14px;
+  transition: opacity 0.35s ease;
+}
+
+.arcade-screen {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), inset 0 0 2px var(--cyan);
+}
+
+.arcade-screen canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.arcade-screen-label {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--cyan-soft);
+  text-shadow: var(--glow-sm);
   animation: blink 1s step-start infinite;
+  transition: opacity 0.3s ease;
+}
+.arcade-screen-label.hidden { opacity: 0; }
+
+.arcade-screen-glare {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.08), transparent 55%),
+    linear-gradient(180deg, transparent, rgba(55, 244, 255, 0.06) 50%, transparent);
+  background-size: 100% 100%, 100% 4px;
+  pointer-events: none;
+}
+
+.arcade-panel {
+  background: linear-gradient(180deg, #0e1620, #060a10);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  transition: opacity 0.35s ease;
+}
+.arcade-stick {
+  width: 8px; height: 22px;
+  background: var(--text-dim);
+  border-radius: 3px;
+  position: relative;
+}
+.arcade-stick::before {
+  content: '';
+  position: absolute;
+  top: -5px; left: 50%;
+  transform: translateX(-50%);
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--violet);
+  box-shadow: var(--glow-sm);
+}
+.arcade-btn {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: var(--glow-sm);
+}
+
+.intro-overlay.zooming .arcade-marquee,
+.intro-overlay.zooming .arcade-screen-frame,
+.intro-overlay.zooming .arcade-panel {
+  opacity: 0;
+}
+
+.intro-skip {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 0.9rem;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.4s ease, border-color 0.25s ease, color 0.25s ease;
+}
+.intro-skip.visible { opacity: 1; }
+.intro-skip:hover { color: var(--cyan); border-color: var(--cyan); }
+.intro-overlay.zooming .intro-skip { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .arcade-cabinet, .intro-overlay { transition: none; }
 }
 
 @keyframes blink { 50% { opacity: 0; } }

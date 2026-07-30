@@ -1,50 +1,170 @@
-// ===================== Boot sequence =====================
-const bootLines = [
-  '> INITIALIZING SYSTEM...',
-  '> LOADING IDENTITY MODULE... OK',
-  '> LOADING PROJECT INDEX... OK',
-  '> LOADING BEEPER.FIRMWARE... OK',
-  '> ACCESS GRANTED',
-];
+// ===================== Arcade intro: mini Tron preview =====================
+// A small, self-contained light-cycle-style animation for the arcade
+// screen. Deliberately NOT the real grid engine (createGridEngine) --
+// different sizing model (a small fixed container instead of the full
+// page) and this is disposable/torn down within a few seconds, so it's
+// not worth coupling to the real game's logic. Same visual language
+// (colored trail + glowing head, simple turn-avoid-the-wall movement),
+// scaled down.
+function startMiniTronPreview(canvas) {
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.max(window.devicePixelRatio || 1, 1);
+  const CELL = 6;
+  const rect = canvas.getBoundingClientRect();
+  const cols = Math.max(Math.floor(rect.width / CELL), 10);
+  const rows = Math.max(Math.floor(rect.height / CELL), 10);
+  canvas.width = cols * CELL * dpr;
+  canvas.height = rows * CELL * dpr;
+  canvas.style.width = `${cols * CELL}px`;
+  canvas.style.height = `${rows * CELL}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-function runBootSequence() {
-  const overlay = document.getElementById('bootOverlay');
-  const textEl = document.getElementById('bootText');
-  if (!overlay || !textEl) return;
+  const DIRS = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+  const TURNS = { up: ['left', 'right'], down: ['left', 'right'], left: ['up', 'down'], right: ['up', 'down'] };
+  const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d'];
 
-  // Respect reduced motion / repeat visits: skip long boot after first load in a session
-  const skip = sessionStorage && sessionStorage.getItem('beeper_booted');
-  if (skip) {
-    overlay.classList.add('hidden');
+  let grid;
+  let bots;
+
+  function inBounds(x, y) { return x >= 0 && y >= 0 && x < cols && y < rows; }
+  function isFree(x, y) { return inBounds(x, y) && !grid[y][x]; }
+
+  function spawn(id, color) {
+    const margin = 2;
+    const x = margin + Math.floor(Math.random() * Math.max(cols - margin * 2, 1));
+    const y = margin + Math.floor(Math.random() * Math.max(rows - margin * 2, 1));
+    const dir = Object.keys(DIRS)[Math.floor(Math.random() * 4)];
+    return { id, color, x, y, dir, alive: true, trail: [{ x, y }] };
+  }
+
+  function reset() {
+    grid = Array.from({ length: rows }, () => new Array(cols).fill(0));
+    bots = COLORS.map((c, i) => spawn(i, c));
+    bots.forEach((b) => { grid[b.y][b.x] = b.id + 1; });
+  }
+  reset();
+
+  function chooseDir(bot) {
+    const candidates = [bot.dir, ...TURNS[bot.dir]].filter((dir) => {
+      const d = DIRS[dir];
+      return isFree(bot.x + d.x, bot.y + d.y);
+    });
+    if (!candidates.length) return bot.dir;
+    if (candidates.includes(bot.dir) && Math.random() < 0.65) return bot.dir;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  function tick() {
+    const alive = bots.filter((b) => b.alive);
+    if (alive.length <= 1) { reset(); return; }
+    const moves = alive.map((b) => {
+      const dir = chooseDir(b);
+      const d = DIRS[dir];
+      return { bot: b, dir, nx: b.x + d.x, ny: b.y + d.y };
+    });
+    moves.forEach((m) => {
+      const row = grid[m.ny];
+      const dead = !inBounds(m.nx, m.ny) || (row && row[m.nx]) ||
+        moves.some((o) => o !== m && o.nx === m.nx && o.ny === m.ny);
+      if (dead) { m.bot.alive = false; return; }
+      m.bot.dir = m.dir;
+      m.bot.x = m.nx;
+      m.bot.y = m.ny;
+      m.bot.trail.push({ x: m.nx, y: m.ny });
+      grid[m.ny][m.nx] = m.bot.id + 1;
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cols * CELL, rows * CELL);
+    bots.forEach((bot) => {
+      const trail = bot.trail;
+      if (trail.length > 1) {
+        ctx.strokeStyle = bot.color;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'square';
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x * CELL + CELL / 2, trail[0].y * CELL + CELL / 2);
+        for (let i = 1; i < trail.length; i++) {
+          ctx.lineTo(trail[i].x * CELL + CELL / 2, trail[i].y * CELL + CELL / 2);
+        }
+        ctx.stroke();
+      }
+      if (bot.alive) {
+        ctx.fillStyle = bot.color;
+        ctx.shadowColor = bot.color;
+        ctx.shadowBlur = 6;
+        ctx.fillRect(bot.x * CELL + 1, bot.y * CELL + 1, CELL - 2, CELL - 2);
+        ctx.shadowBlur = 0;
+      }
+    });
+  }
+
+  const handle = setInterval(() => { tick(); draw(); }, 90);
+  draw();
+  return function stop() { clearInterval(handle); };
+}
+
+// ===================== Arcade intro sequence =====================
+// Replaces the old typed-out fake boot log: an arcade cabinet holds the
+// mini preview above for a beat, then the cabinet scales up (CSS
+// transition) centered exactly on the screen -- transform-origin is
+// computed here from the screen's real bounding box -- while the bezel/
+// marquee/panel fade out, reading as diving through the screen. The real
+// site has been sitting rendered underneath the whole time; the overlay
+// just fades away at the end to reveal it. Total: ~1.4s preview + 1s zoom
+// + 0.6s fade, roughly the "three seconds" this was asked for.
+function runIntroSequence() {
+  const overlay = document.getElementById('introOverlay');
+  const canvas = document.getElementById('introCanvas');
+  const cabinet = document.getElementById('arcadeCabinet');
+  const screenEl = document.getElementById('arcadeScreen');
+  const skipBtn = document.getElementById('introSkip');
+  const label = document.getElementById('introLabel');
+  if (!overlay || !canvas || !cabinet || !screenEl || !skipBtn) return;
+
+  let seen = null;
+  try { seen = sessionStorage.getItem('gh_intro_seen'); } catch (e) {}
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (seen || reduced) {
+    overlay.remove();
     return;
   }
 
-  let lineIndex = 0;
-  let charIndex = 0;
-  let output = '';
+  let stopPreview = null;
+  requestAnimationFrame(() => {
+    stopPreview = startMiniTronPreview(canvas);
+  });
 
-  function typeNext() {
-    if (lineIndex >= bootLines.length) {
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        try { sessionStorage.setItem('beeper_booted', '1'); } catch (e) {}
-      }, 350);
-      return;
-    }
-    const line = bootLines[lineIndex];
-    if (charIndex <= line.length) {
-      output = bootLines.slice(0, lineIndex).join('\n') + (lineIndex > 0 ? '\n' : '') + line.slice(0, charIndex);
-      textEl.textContent = output;
-      charIndex++;
-      setTimeout(typeNext, 14);
-    } else {
-      lineIndex++;
-      charIndex = 0;
-      setTimeout(typeNext, 180);
-    }
+  let finished = false;
+  function zoomIn() {
+    if (finished) return;
+    finished = true;
+    if (label) label.classList.add('hidden');
+    window.removeEventListener('keydown', onKey);
+    skipBtn.removeEventListener('click', zoomIn);
+
+    const screenRect = screenEl.getBoundingClientRect();
+    const cabinetRect = cabinet.getBoundingClientRect();
+    const originX = ((screenRect.left + screenRect.width / 2 - cabinetRect.left) / cabinetRect.width) * 100;
+    const originY = ((screenRect.top + screenRect.height / 2 - cabinetRect.top) / cabinetRect.height) * 100;
+    cabinet.style.transformOrigin = `${originX}% ${originY}%`;
+    overlay.classList.add('zooming');
+
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      if (stopPreview) stopPreview();
+      try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
+      setTimeout(() => overlay.remove(), 650);
+    }, 1000);
   }
 
-  typeNext();
+  function onKey() { zoomIn(); }
+  window.addEventListener('keydown', onKey, { once: true });
+  skipBtn.addEventListener('click', zoomIn);
+
+  setTimeout(() => skipBtn.classList.add('visible'), 500);
+  setTimeout(zoomIn, 1400);
 }
 
 // ===================== Hero eyebrow typewriter =====================
@@ -1333,7 +1453,7 @@ function setupFooterYear() {
 // ===================== Init =====================
 document.addEventListener('DOMContentLoaded', () => {
   setupBackgrounds();
-  runBootSequence();
+  runIntroSequence();
   setupTypewriter();
   setupScrambleOnLoad();
   setupHeaderScroll();

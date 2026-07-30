@@ -16,8 +16,23 @@
 <div class="scanline" aria-hidden="true"></div>
 <div class="cursor-glow" aria-hidden="true"></div>
 
-<div class="boot-overlay" id="bootOverlay" aria-hidden="true">
-  <div class="boot-text" id="bootText"></div>
+<div class="intro-overlay" id="introOverlay" aria-hidden="true">
+  <div class="arcade-cabinet" id="arcadeCabinet">
+    <div class="arcade-marquee"><span>GH_SYS</span></div>
+    <div class="arcade-screen-frame">
+      <div class="arcade-screen" id="arcadeScreen">
+        <canvas id="introCanvas"></canvas>
+        <div class="arcade-screen-label" id="introLabel">INSERT COIN</div>
+        <div class="arcade-screen-glare"></div>
+      </div>
+    </div>
+    <div class="arcade-panel">
+      <span class="arcade-stick"></span>
+      <span class="arcade-btn"></span>
+      <span class="arcade-btn"></span>
+    </div>
+  </div>
+  <button class="intro-skip" id="introSkip" type="button">SKIP INTRO &rarr;</button>
 </div>
 
 <header class="site-header" id="siteHeader">
