@@ -511,9 +511,12 @@ body.custom-cursor-active button {
 }
 
 /* Control panel: wider than the screen bezel (like the real cabinet's
-   panel stepping out past the body), a cyan trim strip along the front
-   edge, a blue ball-top joystick, and red fire buttons -- the two colors
-   that read as "arcade cabinet" at a glance on the reference machine. */
+   panel stepping out past the body). Reworked layout after the reference
+   photo -- a backlit blue trigger bar across the top, then a control row
+   of rotary spinner (left) / two red buttons (center) / blue flight-stick
+   (right) -- plus a pair of faint crosshair-ring "PCB trace" marks and a
+   bottom compass ring standing in for the circuit-line decal art on the
+   real panel surface. */
 .arcade-panel {
   position: relative;
   width: 108%;
@@ -522,11 +525,7 @@ body.custom-cursor-active button {
   border: 1px solid var(--border);
   border-top: none;
   border-radius: 0 0 14px 14px;
-  padding: 0.8rem 1rem 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.1rem;
+  padding: 0.75rem 0.9rem 1.1rem;
   transition: opacity 0.35s ease;
 }
 .arcade-panel::before {
@@ -538,27 +537,126 @@ body.custom-cursor-active button {
   box-shadow: var(--glow-sm);
   opacity: 0.7;
 }
-.arcade-stick {
-  width: 7px; height: 24px;
-  background: linear-gradient(180deg, #4a5a68, #1c242c);
-  border-radius: 3px;
-  position: relative;
-}
-.arcade-stick::before {
+.arcade-panel::after {
+  /* bottom-center compass ring, echoing the large circular emblem near
+     the base of the reference panel */
   content: '';
   position: absolute;
-  top: -7px; left: 50%;
+  left: 50%; bottom: -10px;
   transform: translateX(-50%);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(124, 107, 255, 0.35);
+  box-shadow: inset 0 0 0 5px rgba(124, 107, 255, 0.08);
+  pointer-events: none;
+}
+
+/* Small crosshair-ring marks, standing in for the repeated circle decals
+   scattered across the reference panel's line art. */
+.panel-mark {
+  position: absolute;
+  top: 6px;
   width: 14px; height: 14px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--cyan-soft), var(--blue) 65%, #0a3d7a);
-  box-shadow: 0 0 8px rgba(43, 107, 255, 0.7);
+  border: 1.5px solid var(--mark-color);
+  opacity: 0.65;
+  pointer-events: none;
 }
+.panel-mark::before,
+.panel-mark::after {
+  content: '';
+  position: absolute;
+  background: var(--mark-color);
+}
+.panel-mark::before { top: 50%; left: -3px; right: -3px; height: 1px; transform: translateY(-50%); }
+.panel-mark::after { left: 50%; top: -3px; bottom: -3px; width: 1px; transform: translateX(-50%); }
+.panel-mark-l { left: 10px; --mark-color: var(--cyan); }
+.panel-mark-r { right: 10px; --mark-color: var(--arcade-red); }
+
+/* Backlit trigger bar: a glowing blue glass tube with faint segment
+   etching, spanning the panel above the buttons. */
+.arcade-panel-bar {
+  position: relative;
+  height: 18px;
+  margin: 4px 4px 12px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #bdf3ff 0%, var(--cyan) 25%, var(--blue) 65%, #0c2f66 100%);
+  box-shadow: 0 0 16px rgba(43, 107, 255, 0.75), inset 0 2px 3px rgba(255, 255, 255, 0.45), inset 0 -4px 6px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.arcade-panel-bar::before {
+  content: '';
+  position: absolute;
+  top: 2px; left: 6%;
+  width: 88%; height: 3px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 3px;
+}
+.arcade-panel-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 16px, rgba(6, 14, 30, 0.4) 16px 17px);
+}
+
+.arcade-panel-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.3rem;
+}
+
+.arcade-spinner {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #7a8794, #262c32 65%, #101317);
+  box-shadow: 0 0 0 2px rgba(255, 184, 77, 0.25), inset 0 2px 3px rgba(255, 255, 255, 0.18), inset 0 -3px 4px rgba(0, 0, 0, 0.55);
+  position: relative;
+}
+.arcade-spinner::before {
+  content: '';
+  position: absolute;
+  top: 3px; left: 50%;
+  width: 2px; height: 5px;
+  background: rgba(255, 255, 255, 0.45);
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
 .arcade-btn {
   width: 13px; height: 13px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ff8f9c, var(--arcade-red) 65%, #a30016);
   box-shadow: 0 0 7px rgba(255, 77, 94, 0.65);
+}
+
+/* Flight-stick joystick: a short post with a tall, tapered translucent
+   handle rising above the panel edge, matching the reference's aqua
+   trigger-stick rather than a small ball-top. */
+.arcade-stick {
+  width: 8px; height: 12px;
+  background: linear-gradient(180deg, #4a5a68, #1c242c);
+  border-radius: 2px;
+  position: relative;
+}
+.arcade-stick::before {
+  content: '';
+  position: absolute;
+  bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  width: 12px; height: 24px;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, #c8fbff 0%, var(--cyan-soft) 25%, var(--blue) 75%, #0a3d7a 100%);
+  box-shadow: 0 0 10px rgba(43, 107, 255, 0.75), inset -2px 0 4px rgba(255, 255, 255, 0.3);
+}
+.arcade-stick::after {
+  content: '';
+  position: absolute;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 /* Coin door: a narrow dark strip under the control panel with two slot
