@@ -478,7 +478,7 @@ function createGridEngine() {
   const TICK_MS = 95;
   const ROUND_PAUSE_MS = 1600;
   const MAX_ROUND_TICKS = 500; // safety net so a round can't stall forever
-  const FLOOD_LIMIT = 80; // how far each bot "looks" when judging open space
+  const FLOOD_LIMIT = 300; // how far each bot "looks" when judging open space -- raised from 80, which was low enough that a small self-made pocket and a genuinely open field could both hit the cap and score identically, so a bot had no way to tell "plenty of room out there" from "just enough room to notice too late." 300 is still a small fraction of a full viewport's cell count, so the extra BFS work per candidate direction is negligible against the 95ms tick budget.
   const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
   const CUTOFF_LEAD = 7; // cells down a target's own lane a cutsOff bot aims to beat them to
   const CUTOFF_ENGAGE_RANGE = 20; // only commit to a cutoff run this close in; otherwise just close distance normally
@@ -486,6 +486,8 @@ function createGridEngine() {
   const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
   const DANGER_SPACE_BOOST = 1.6; // extra multiplier on raw open space once in danger, on top of the aggression cut -- makes the safest option win more decisively instead of a close-second chase option narrowly outscoring it
   const COLLISION_RISK_PENALTY = 35; // deterrent for stepping into an opponent's likely next cell
+  const KILL_OPPORTUNITY_RANGE = 6; // "genuinely close" -- raw Manhattan distance to the nearest real rider (not the lead-projected aim point) inside which a closing move counts as a live kill opportunity
+  const KILL_OPPORTUNITY_BONUS = 14; // extra pull toward a real, nearby opponent when closing the gap doesn't cost the bot its own safety margin -- deliberately NOT scaled down for low-aggression personalities, so every rider takes a free/safe kill instead of drifting off to pad its own open space for no reason
   const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
@@ -710,6 +712,18 @@ function createGridEngine() {
     const candidateDirs = [bot.dir, ...TURNS[bot.dir]];
     const target = nearestTarget(bot, alive);
 
+    // Raw nearest real rider (not the lead-projected aim point nearestTarget
+    // returns) and the actual current gap to them -- used below to spot a
+    // safe, immediate kill opportunity separately from the personality-
+    // scaled long-range chase pull.
+    let nearestOpp = null;
+    let nearestOppDist = Infinity;
+    alive.forEach((other) => {
+      if (other === bot) return;
+      const d = Math.abs(other.x - bot.x) + Math.abs(other.y - bot.y);
+      if (d < nearestOppDist) { nearestOppDist = d; nearestOpp = other; }
+    });
+
     const options = candidateDirs
       .map((dir) => {
         const d = DIRS[dir];
@@ -725,6 +739,7 @@ function createGridEngine() {
     const maxSpace = Math.max(...options.map((o) => o.space));
     const inDanger = maxSpace < DANGER_SPACE_THRESHOLD * bot.dangerMultiplier;
     const aggressionScale = inDanger ? ESCAPE_AGGRESSION_CUT : 1;
+    const safeSpaceFloor = DANGER_SPACE_THRESHOLD * bot.dangerMultiplier;
 
     // Naive one-tick lookahead for every other rider, assuming they keep
     // going straight. Not always true, but it's what a real player reads
@@ -750,6 +765,20 @@ function createGridEngine() {
         const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
         score -= dist * bot.aggression * aggressionScale;
       }
+
+      // Safe kill opportunity: a real opponent is genuinely close, this
+      // move closes the gap on them, and it doesn't eat into the bot's own
+      // safety margin (space still clears the same floor that would flag
+      // this bot as "in danger"). Bigger bonus the tighter the resulting
+      // gap gets, so a bot that can flat-out finish someone off doesn't
+      // let a marginally-more-open direction outscore it and let them go.
+      if (!inDanger && nearestOpp && nearestOppDist <= KILL_OPPORTUNITY_RANGE && space >= safeSpaceFloor) {
+        const oppNewDist = Math.abs(nearestOpp.x - nx) + Math.abs(nearestOpp.y - ny);
+        if (oppNewDist < nearestOppDist) {
+          score += KILL_OPPORTUNITY_BONUS * (1 - oppNewDist / (KILL_OPPORTUNITY_RANGE + 1));
+        }
+      }
+
       const headOnRisk = incoming.some((p) => p.x === nx && p.y === ny);
       // Reckless (high-aggression) personalities normally shrug off head-on
       // risk (penalty shrinks as aggression grows), which is the "two
