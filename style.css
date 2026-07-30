@@ -1277,7 +1277,8 @@ body.custom-cursor-active button {
 /* Devices/media get an extra power-on stutter once their reveal-wrapped
    ancestor scrolls into view — no JS hook needed, piggybacks on .in-view. */
 .reveal.in-view .device,
-.reveal.in-view .media-frame {
+.reveal.in-view .media-frame,
+.reveal.in-view .evidence-frame {
   animation: powerOnFlicker 0.8s steps(10, end) 0.25s both;
 }
 
@@ -1423,6 +1424,61 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   color: var(--text-dimmer);
+}
+
+/* Evidence gallery: real screenshots dropped into a case-study section.
+   Unlike .media-frame (fixed cyan, used for the one-off Beeper hero
+   shot), this reads --accent/--accent-border/--accent-glow from
+   whichever .accent-* section it's nested in, so a screenshot inside
+   an accent-amber case-section frames in amber, one inside
+   accent-violet frames in violet, etc. -- it inherits the section's
+   theme instead of carrying its own fixed color. */
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.2rem;
+  margin: 1.8rem 0;
+}
+
+.evidence-frame {
+  margin: 0;
+  padding: 8px;
+  background: linear-gradient(160deg, #0b1622, #060d16);
+  border: 1px solid var(--accent-border, rgba(55, 244, 255, 0.3));
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.5);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.evidence-frame:hover {
+  box-shadow: 0 0 20px var(--accent-glow, rgba(55, 244, 255, 0.35)), 0 12px 32px rgba(0,0,0,0.5);
+  transform: translateY(-2px);
+}
+
+.evidence-frame a { display: block; }
+
+.evidence-frame img {
+  display: block;
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid var(--accent-border, rgba(55, 244, 255, 0.25));
+}
+
+.evidence-frame figcaption {
+  margin-top: 8px;
+  padding: 0 2px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.evidence-frame figcaption strong {
+  display: block;
+  color: var(--accent-soft, var(--cyan-soft));
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.2rem;
 }
 
 .device {

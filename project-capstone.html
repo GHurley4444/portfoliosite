@@ -54,6 +54,20 @@
         <h2>The Exercise</h2>
         <p>Four student teams &mdash; Texas, California, Florida, and Illinois &mdash; each ran their own slice of a shared Proxmox environment: multiple Active Directory domains, Linux and Windows hosts, web and file services, all wired into a credit economy where system uptime earned currency and currency bought flags. A New Jersey network sat alongside them as an unmanned, teamless environment rather than a fifth competing team. On top of that, a dedicated Red Team of alumni volunteers attacked every student team continuously throughout the semester, alongside whatever offense the other student teams could bring. The exercise ran in Episodes, each closing out with an after-action report; I worked alongside four teammates (J.R., J.M., S.W., and L.S.) as Team Texas.</p>
         <p>That structure meant the work was never purely offense or purely defense. The same week we were sniffing credentials out of another team's SSH sessions, we were also tracing down how someone had drained our own bank to zero. Both sides of that fed into the other &mdash; understanding how an attacker covers their tracks is exactly what let us catch one doing it to us.</p>
+        <div class="evidence-grid">
+          <figure class="evidence-frame">
+            <a href="assets/capstone-economy-dashboard.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-economy-dashboard.png" alt="Team Texas economy dashboard showing a zero balance and a transaction log of uptime-check payouts and a transfer request" loading="lazy">
+            </a>
+            <figcaption><strong>CREDIT ECONOMY</strong>The uptime-driven currency system &mdash; balance and transaction log for Team Texas.</figcaption>
+          </figure>
+          <figure class="evidence-frame">
+            <a href="assets/capstone-flags-share.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-flags-share.png" alt="Directory listing of captured flag image files on a Team Texas file share" loading="lazy">
+            </a>
+            <figcaption><strong>FLAG SHARE</strong>Captured flags stored on our own share &mdash; what that credit economy was actually buying.</figcaption>
+          </figure>
+        </div>
       </div>
 
       <div class="case-section accent-cyan reveal">
@@ -90,6 +104,14 @@
             <p>Moved the team from password to public-key SSH auth team-wide, and used the rollout as a chance to audit every host's <code>authorized_keys</code> for backdoors other teams had already planted.</p>
           </div>
         </div>
+        <div class="evidence-grid">
+          <figure class="evidence-frame">
+            <a href="assets/capstone-graylog-dashboard.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-graylog-dashboard.png" alt="Graylog main dashboard showing total log volume and top log sources across Team Texas hosts" loading="lazy">
+            </a>
+            <figcaption><strong>SIEM DASHBOARD</strong>Our Graylog overview &mdash; log volume across the fleet, rebuilt more than once after being targeted directly.</figcaption>
+          </figure>
+        </div>
       </div>
 
       <div class="case-section accent-amber reveal">
@@ -102,6 +124,32 @@
           <li><strong>ACTIVE SESSION DETECTION</strong>On two more hosts, we found duplicate SSH keys and foreign entries in <code>known_hosts</code> &mdash; and on one of them, <code>netstat</code> turned up a live external SSH session mid-attack. We killed the session, rotated both root passwords immediately, and cleaned the compromised host state.</li>
           <li><strong>UNAUTHORIZED SOFTWARE (&quot;DUCK PROGRAM&quot;)</strong>Several Windows hosts started showing animated ducks walking across the screen and random notepad pop-ups &mdash; harmless-looking, but unauthorized and worth taking seriously. Traced it to a modified prankware tool dropped via remote task execution, confirmed no persistence had been left behind using Autoruns, Registry Editor, and PowerShell, then removed it cleanly.</li>
         </ul>
+        <div class="evidence-grid">
+          <figure class="evidence-frame">
+            <a href="assets/capstone-forensic-eventlogs.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-forensic-eventlogs.png" alt="Forensic analysis tool showing hundreds of thousands of parsed Windows Security and System event log entries" loading="lazy">
+            </a>
+            <figcaption><strong>EVENT LOG TRIAGE</strong>412K+ parsed Windows events during a host investigation &mdash; logon activity, privilege assignment, scheduled tasks.</figcaption>
+          </figure>
+          <figure class="evidence-frame">
+            <a href="assets/capstone-smb-shares.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-smb-shares.png" alt="smbclient session listing Recon, OperationsPlans, IncidentResponse, AfterActionReports, and EpisodeReports directories on a Team Texas share" loading="lazy">
+            </a>
+            <figcaption><strong>REPORTING STRUCTURE</strong>Our share layout for the exercise &mdash; recon, op plans, IR, and after-action reports kept separate and organized.</figcaption>
+          </figure>
+          <figure class="evidence-frame">
+            <a href="assets/capstone-troll-bashrc.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-troll-bashrc.png" alt="A malicious shell profile found on a compromised host, hijacking common commands with sarcastic messages and a base64-obfuscated ASCII art payload" loading="lazy">
+            </a>
+            <figcaption><strong>PLANTED SHELL PROFILE</strong>A booby-trapped <code>.bashrc</code> found during triage &mdash; hijacked aliases, a base64-obfuscated payload, and a fake shutdown threat baked into <code>nano</code>.</figcaption>
+          </figure>
+          <figure class="evidence-frame">
+            <a href="assets/capstone-graylog-search.png" target="_blank" rel="noopener">
+              <img src="assets/capstone-graylog-search.png" alt="Graylog search results showing a failed uptime check alongside a successful SSL/TLS content check across Team Texas hosts" loading="lazy">
+            </a>
+            <figcaption><strong>LIVE MONITORING</strong>Graylog catching a service outage in real time alongside routine uptime checks.</figcaption>
+          </figure>
+        </div>
       </div>
 
       <div class="case-section accent-blue reveal">
