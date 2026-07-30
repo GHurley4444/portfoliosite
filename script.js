@@ -1114,6 +1114,7 @@ function setupSecretGame() {
       setTimeout(() => {
         hud.classList.remove('visible');
         active = false;
+        document.body.classList.remove('game-active');
         if (bgToggleBtn) bgToggleBtn.disabled = false;
         window.removeEventListener('keydown', onKey);
       }, 2200);
@@ -1122,6 +1123,7 @@ function setupSecretGame() {
 
   function exitGame() {
     active = false;
+    document.body.classList.remove('game-active');
     if (bgToggleBtn) bgToggleBtn.disabled = false;
     window.removeEventListener('keydown', onKey);
     hud.classList.remove('visible');
@@ -1151,6 +1153,9 @@ function setupSecretGame() {
   trigger.addEventListener('click', () => {
     if (active) { exitGame(); return; }
     active = true;
+    // .game-active is what dims the main content during play -- see the
+    // CSS comment there for the other trigger (hovering the nav bar).
+    document.body.classList.add('game-active');
 
     // The game runs on the light-cycle canvas specifically — force that
     // background on if the orbit display is currently showing.

@@ -113,21 +113,31 @@ body.bg-lightcycle:has(.site-footer:hover) .lightcycle-bg {
   opacity: 0.22;
 }
 
-/* Tron mode: fade the page content itself so the grid battle running
-   behind it is actually visible/playable instead of being hidden behind
-   solid text and panels. Hovering a faded area brings it back to full
-   opacity so it's still readable on demand. Links/buttons stay fully
-   clickable throughout — opacity doesn't touch pointer events. The header
-   stays out of this entirely — it's the nav/toggle bar, always needs to
-   be legible, and never sits over the game area anyway. */
-body.bg-lightcycle main,
-body.bg-lightcycle .site-footer {
+/* Fade the page content itself in two situations: while hovering the
+   nav bar (a quick peek at whatever's running behind the page), and
+   while actively playing the secret light-cycle game, so the grid
+   battle is visible/playable instead of hidden behind solid text and
+   panels. This used to be tied to "lightcycle background selected"
+   rather than "game actually playing" -- since lightcycle is the
+   default background for every visitor, that dimmed the whole page on
+   every fresh load until the mouse moved, whether or not anyone was
+   playing. Hovering a faded area during gameplay brings it back to
+   full opacity so it's still readable on demand; the nav-hover case
+   reverts on its own once the mouse leaves the header, since :has()
+   is already tracking that directly. Links/buttons stay fully
+   clickable throughout — opacity doesn't touch pointer events. The
+   header itself stays out of this entirely — it always needs to be
+   legible, and never sits over the game area anyway. */
+body.game-active main,
+body.game-active .site-footer,
+body:has(.site-header:hover) main,
+body:has(.site-header:hover) .site-footer {
   opacity: 0.16;
   transition: opacity 0.4s ease;
 }
 
-body.bg-lightcycle main:hover,
-body.bg-lightcycle .site-footer:hover {
+body.game-active main:hover,
+body.game-active .site-footer:hover {
   opacity: 1;
 }
 
