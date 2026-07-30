@@ -196,7 +196,7 @@ function runIntroSequence() {
 
   setTimeout(() => skipBtn.classList.add('visible'), 500);
   const sitePreviewTimer = setTimeout(showSitePreview, 1200); // canvas preview -> site mockup
-  const finishTimer = setTimeout(finish, 5100); // hold, then cut straight to the real page
+  const finishTimer = setTimeout(finish, 3100); // hold, then cut straight to the real page
   return true;
 }
 
@@ -614,8 +614,12 @@ function createGridEngine() {
     canvas.style.width = `${viewportWidth}px`;
     canvas.style.height = `${viewportHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.ceil(viewportWidth / CELL);
-    rows = Math.ceil(viewportHeight / CELL);
+    // Floored rather than left to reach 0/negative -- a hidden/occluded tab
+    // can report a 0 clientWidth/Height before its first real layout pass,
+    // and randomSpawn()'s margin-based placement assumes a grid with real
+    // room in it either way.
+    cols = Math.max(Math.ceil(viewportWidth / CELL), 10);
+    rows = Math.max(Math.ceil(viewportHeight / CELL), 10);
   }
 
   function startAmbientRound() {
@@ -2139,16 +2143,18 @@ function setupPrescriptDemo() {
 }
 
 // ===================== Blackjack demo (project-blackjack.html) =====================
-// A JS port of main.py's own deck/value/soft-Ace/dealer-threshold logic --
-// not a separate reimplementation. Unlike the terminal original (one
-// self-contained round with placeholder payout text), this loops rounds
-// with a fresh shuffled deck each deal and computes real chip payouts.
+// A JS port of main.py's own deck/value/soft-Ace/insurance/peek/split/
+// dealer-threshold logic -- not a separate reimplementation. Unlike the
+// terminal original (one self-contained round with placeholder payout
+// text), this loops rounds with a fresh shuffled deck each deal and
+// computes real chip payouts.
 const BJ_SUITS = ['Hearts', 'Diamonds', 'Spades', 'Clubs'];
 const BJ_VALUES = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
 const BJ_CARD_VALUES = { Ace: 11, King: 10, Queen: 10, Jack: 10 };
 for (let n = 2; n <= 10; n++) BJ_CARD_VALUES[String(n)] = n;
 const BJ_RANK_LABEL = { Ace: 'A', Jack: 'J', Queen: 'Q', King: 'K' };
 const BJ_SUIT_SYMBOL = { Hearts: '♥', Diamonds: '♦', Spades: '♠', Clubs: '♣' };
+const BJ_TEN_VALUES = ['10', 'Jack', 'Queen', 'King'];
 
 function bjFreshDeck() {
   const deck = [];
@@ -2164,13 +2170,17 @@ function bjDraw(deck, hand, n) {
   }
 }
 
-// Mirrors main.py's draw()/dealerDraw(): recount Aces, then demote them
-// from 11 to 1 one at a time while the hand is still over 21.
+// Mirrors main.py's hand_sum(): recount Aces, then demote them from 11 to
+// 1 one at a time while the hand is still over 21.
 function bjHandSum(hand) {
   let sum = hand.reduce((s, c) => s + BJ_CARD_VALUES[c.value], 0);
   let aces = hand.filter((c) => c.value === 'Ace').length;
   while (sum > 21 && aces > 0) { sum -= 10; aces -= 1; }
   return sum;
+}
+
+function bjIsBlackjack(cards) {
+  return cards.length === 2 && bjHandSum(cards) === 21;
 }
 
 function bjCardEl(card, faceDown) {
@@ -2186,14 +2196,16 @@ function bjCardEl(card, faceDown) {
   return el;
 }
 
+function bjCardLabel(card) {
+  return `${BJ_RANK_LABEL[card.value] || card.value}${BJ_SUIT_SYMBOL[card.suit]}`;
+}
+
 function setupBlackjackDemo() {
   const table = document.getElementById('bjTable');
   if (!table) return;
 
   const dealerHandEl = document.getElementById('bjDealerHand');
-  const playerHandEl = document.getElementById('bjPlayerHand');
   const dealerSumEl = document.getElementById('bjDealerSum');
-  const playerSumEl = document.getElementById('bjPlayerSum');
   const statusEl = document.getElementById('bjStatus');
   const balanceEl = document.getElementById('bjBalance');
   const betValEl = document.getElementById('bjBetVal');
@@ -2201,29 +2213,56 @@ function setupBlackjackDemo() {
   const betPlusBtn = document.getElementById('bjBetPlus');
   const dealBtn = document.getElementById('bjDealBtn');
   const betControls = document.getElementById('bjBetControls');
+  const insuranceControls = document.getElementById('bjInsuranceControls');
+  const insAmtEl = document.getElementById('bjInsAmt');
+  const insYesBtn = document.getElementById('bjInsYesBtn');
+  const insNoBtn = document.getElementById('bjInsNoBtn');
   const playControls = document.getElementById('bjPlayControls');
   const hitBtn = document.getElementById('bjHitBtn');
   const standBtn = document.getElementById('bjStandBtn');
+  const doubleBtn = document.getElementById('bjDoubleBtn');
+  const splitBtn = document.getElementById('bjSplitBtn');
+  const surrenderBtn = document.getElementById('bjSurrenderBtn');
+
+  const handBlocks = [document.getElementById('bjHandBlock0'), document.getElementById('bjHandBlock1')];
+  const handLabels = [document.getElementById('bjHandLabel0'), document.getElementById('bjHandLabel1')];
+  const handEls = [document.getElementById('bjPlayerHand0'), document.getElementById('bjPlayerHand1')];
+  const sumEls = [document.getElementById('bjPlayerSum0'), document.getElementById('bjPlayerSum1')];
 
   const BET_STEP = 25;
 
   let balance = 500;
   let bet = BET_STEP;
-  let deck = [];
-  let playerHand = [];
-  let dealerHand = [];
-  let inRound = false;
+  // Live only during a round: { deck, dealerHand, hands, activeIndex,
+  // insuranceBet, phase }. phase is one of 'insurance' | 'player' | 'done'.
+  let round = null;
 
-  function renderHands(revealDealer) {
+  function newHand(cards, handBet, fromSplit) {
+    return { cards, bet: handBet, surrendered: false, isSplitAces: false, fromSplit: !!fromSplit, firstAction: true };
+  }
+
+  function currentHand() { return round.hands[round.activeIndex]; }
+
+  function renderRound() {
+    const revealDealer = round.phase === 'done';
     dealerHandEl.innerHTML = '';
-    dealerHand.forEach((c, i) => dealerHandEl.appendChild(bjCardEl(c, i === 1 && !revealDealer)));
-    playerHandEl.innerHTML = '';
-    playerHand.forEach((c) => playerHandEl.appendChild(bjCardEl(c, false)));
-
-    playerSumEl.textContent = `(${bjHandSum(playerHand)})`;
+    round.dealerHand.forEach((c, i) => dealerHandEl.appendChild(bjCardEl(c, i === 1 && !revealDealer)));
     dealerSumEl.textContent = revealDealer
-      ? `(${bjHandSum(dealerHand)})`
-      : `(${BJ_CARD_VALUES[dealerHand[0].value]}+?)`;
+      ? `(${bjHandSum(round.dealerHand)})`
+      : `(${BJ_CARD_VALUES[round.dealerHand[0].value]}+?)`;
+
+    round.hands.forEach((h, idx) => {
+      handBlocks[idx].classList.remove('hidden');
+      handBlocks[idx].classList.toggle('active', round.phase === 'player' && idx === round.activeIndex);
+      handLabels[idx].firstChild.textContent = round.hands.length > 1 ? `HAND ${idx + 1}` : 'YOU';
+      handEls[idx].innerHTML = '';
+      h.cards.forEach((c) => handEls[idx].appendChild(bjCardEl(c, false)));
+      const total = bjHandSum(h.cards);
+      sumEls[idx].textContent = h.surrendered ? `(${total}) SURR` : `(${total})`;
+    });
+    for (let idx = round.hands.length; idx < handBlocks.length; idx++) {
+      handBlocks[idx].classList.add('hidden');
+    }
   }
 
   function updateBetUI() {
@@ -2249,68 +2288,232 @@ function setupBlackjackDemo() {
     if (bet + BET_STEP <= balance) { bet += BET_STEP; updateBetUI(); }
   });
 
-  function startRound() {
-    if (balance < bet || bet <= 0) return;
-    inRound = true;
-    balance -= bet;
-    deck = bjFreshDeck();
-    playerHand = [];
-    dealerHand = [];
-    bjDraw(deck, dealerHand, 2);
-    bjDraw(deck, playerHand, 2);
-    renderHands(false);
-    statusEl.textContent = 'HIT OR STAND?';
-    betControls.classList.add('hidden');
-    playControls.classList.remove('hidden');
-    updateBetUI();
+  function updateActionButtons() {
+    const hand = currentHand();
+    const eligible = hand.firstAction && hand.cards.length === 2;
+    doubleBtn.classList.toggle('hidden', !(eligible && balance >= hand.bet));
+    splitBtn.classList.toggle('hidden', !(eligible && !hand.fromSplit && hand.cards[0].value === hand.cards[1].value && balance >= hand.bet));
+    surrenderBtn.classList.toggle('hidden', !(eligible && !hand.fromSplit));
   }
 
-  function endRound(resultText, delta) {
-    inRound = false;
-    balance += delta;
-    renderHands(true);
-    statusEl.textContent = resultText;
+  function endRoundUI() {
+    round = null;
     playControls.classList.add('hidden');
+    insuranceControls.classList.add('hidden');
     betControls.classList.remove('hidden');
     clampBet();
     updateBetUI();
   }
 
-  // Mirrors main.py's roundFinish(): the dealer always draws out to 17+,
-  // even in rounds the player has already busted.
-  function finishRound() {
-    while (bjHandSum(dealerHand) < 17) bjDraw(deck, dealerHand, 1);
+  // ---- Round start: deal, then either offer insurance or resolve the
+  // peek/naturals straight away. ----
+  function startRound() {
+    if (balance < bet || bet <= 0) return;
+    balance -= bet;
 
-    const playerSum = bjHandSum(playerHand);
-    const dealerSum = bjHandSum(dealerHand);
+    const deck = bjFreshDeck();
+    const dealerHand = [];
+    const playerCards = [];
+    bjDraw(deck, dealerHand, 2);
+    bjDraw(deck, playerCards, 2);
 
-    if (playerSum > 21) {
-      if (dealerSum > 21) { endRound('BOTH BUST — BET RETURNED', bet); return; }
-      endRound('YOU BUSTED — BET LOST', 0);
+    round = {
+      deck, dealerHand, hands: [newHand(playerCards, bet, false)],
+      activeIndex: 0, insuranceBet: 0, phase: 'insurance',
+    };
+    renderRound();
+    updateBetUI();
+
+    const upCard = dealerHand[0];
+    if (upCard.value === 'Ace') {
+      betControls.classList.add('hidden');
+      insuranceControls.classList.remove('hidden');
+      insAmtEl.textContent = Math.floor(bet / 2);
+      statusEl.textContent = 'DEALER SHOWS AN ACE — INSURANCE?';
+    } else {
+      betControls.classList.add('hidden');
+      resolvePeekAndNatural();
+    }
+  }
+
+  insYesBtn.addEventListener('click', () => {
+    const amt = Math.floor(round.hands[0].bet / 2);
+    balance -= amt;
+    round.insuranceBet = amt;
+    insuranceControls.classList.add('hidden');
+    updateBetUI();
+    resolvePeekAndNatural();
+  });
+  insNoBtn.addEventListener('click', () => {
+    insuranceControls.classList.add('hidden');
+    resolvePeekAndNatural();
+  });
+
+  // Dealer peeks whenever showing an Ace or a ten-value card -- the hole
+  // card's value is never revealed/rendered before this settles one way
+  // or the other (see renderRound()'s "(X+?)" placeholder above).
+  function resolvePeekAndNatural() {
+    const upCard = round.dealerHand[0];
+    const dealerHasBlackjack = (upCard.value === 'Ace' || BJ_TEN_VALUES.includes(upCard.value)) && bjIsBlackjack(round.dealerHand);
+
+    if (dealerHasBlackjack) {
+      round.phase = 'done';
+      renderRound();
+      const msgs = [`DEALER BLACKJACK (${bjCardLabel(round.dealerHand[1])})`];
+      if (round.insuranceBet > 0) {
+        const payout = round.insuranceBet * 3; // stake back + 2:1
+        balance += payout;
+        msgs.push(`INSURANCE PAYS ${payout}`);
+      }
+      if (bjIsBlackjack(round.hands[0].cards)) {
+        balance += round.hands[0].bet;
+        msgs.push('YOUR BLACKJACK PUSHES');
+      } else {
+        msgs.push('MAIN BET LOST');
+      }
+      statusEl.textContent = msgs.join(' — ');
+      endRoundUI();
       return;
     }
-    if (dealerSum > 21) { endRound('DEALER BUSTS — YOU WIN', bet * 2); return; }
-    if (dealerSum === playerSum) { endRound('PUSH — BET RETURNED', bet); return; }
-    if (dealerSum > playerSum) { endRound('DEALER WINS', 0); return; }
-    if (playerSum === 21) { endRound('BLACKJACK! YOU WIN', Math.round(bet * 2.5)); return; }
-    endRound('YOU WIN', bet * 2);
+
+    const prefix = round.insuranceBet > 0 ? 'NO DEALER BLACKJACK — INSURANCE LOST. ' : '';
+
+    if (bjIsBlackjack(round.hands[0].cards)) {
+      const winnings = Math.round(round.hands[0].bet * 2.5);
+      balance += winnings;
+      round.phase = 'done';
+      renderRound();
+      statusEl.textContent = `${prefix}BLACKJACK! YOU WIN ${winnings}`;
+      endRoundUI();
+      return;
+    }
+
+    round.phase = 'player';
+    round.activeIndex = 0;
+    renderRound();
+    statusEl.textContent = `${prefix}HIT OR STAND?`;
+    updateActionButtons();
+  }
+
+  function goToNextHandOrDealer() {
+    round.activeIndex += 1;
+    if (round.activeIndex >= round.hands.length) {
+      renderRound();
+      setTimeout(runDealerAndResolve, 400);
+      return;
+    }
+    const hand = currentHand();
+    renderRound();
+    if (hand.isSplitAces) {
+      statusEl.textContent = 'SPLIT ACES — STANDS AUTOMATICALLY';
+      setTimeout(goToNextHandOrDealer, 700);
+      return;
+    }
+    statusEl.textContent = round.hands.length > 1 ? `HAND ${round.activeIndex + 1} — HIT OR STAND?` : 'HIT OR STAND?';
+    updateActionButtons();
   }
 
   hitBtn.addEventListener('click', () => {
-    if (!inRound) return;
-    bjDraw(deck, playerHand, 1);
-    renderHands(false);
-    if (bjHandSum(playerHand) > 21) {
-      statusEl.textContent = 'BUSTED — DEALER STILL PLAYS...';
-      finishRound();
+    if (!round || round.phase !== 'player') return;
+    const hand = currentHand();
+    bjDraw(round.deck, hand.cards, 1);
+    hand.firstAction = false;
+    renderRound();
+    if (bjHandSum(hand.cards) > 21) {
+      statusEl.textContent = 'BUST';
+      setTimeout(goToNextHandOrDealer, 500);
+    } else {
+      updateActionButtons();
     }
   });
 
   standBtn.addEventListener('click', () => {
-    if (!inRound) return;
-    statusEl.textContent = 'DEALER PLAYS...';
-    finishRound();
+    if (!round || round.phase !== 'player') return;
+    goToNextHandOrDealer();
   });
+
+  doubleBtn.addEventListener('click', () => {
+    if (!round || round.phase !== 'player') return;
+    const hand = currentHand();
+    balance -= hand.bet;
+    hand.bet *= 2;
+    hand.firstAction = false;
+    bjDraw(round.deck, hand.cards, 1);
+    updateBetUI();
+    renderRound();
+    statusEl.textContent = 'DOUBLED';
+    setTimeout(goToNextHandOrDealer, 600);
+  });
+
+  // Splitting a matching pair (double after split is allowed, re-splitting
+  // isn't); split Aces get exactly one card each and stand automatically
+  // -- see the isSplitAces branch in goToNextHandOrDealer().
+  splitBtn.addEventListener('click', () => {
+    if (!round || round.phase !== 'player') return;
+    const hand = currentHand();
+    balance -= hand.bet;
+    const secondCard = hand.cards.pop();
+    const newSplit = newHand([secondCard], hand.bet, true);
+    newSplit.isSplitAces = secondCard.value === 'Ace';
+    hand.isSplitAces = newSplit.isSplitAces;
+    hand.fromSplit = true;
+    hand.firstAction = true;
+    bjDraw(round.deck, hand.cards, 1);
+    bjDraw(round.deck, newSplit.cards, 1);
+    round.hands.push(newSplit);
+    updateBetUI();
+    renderRound();
+
+    if (hand.isSplitAces) {
+      statusEl.textContent = 'SPLIT ACES — STANDS AUTOMATICALLY';
+      setTimeout(goToNextHandOrDealer, 700);
+    } else {
+      statusEl.textContent = round.hands.length > 1 ? `HAND ${round.activeIndex + 1} — HIT OR STAND?` : 'HIT OR STAND?';
+      updateActionButtons();
+    }
+  });
+
+  surrenderBtn.addEventListener('click', () => {
+    if (!round || round.phase !== 'player') return;
+    const hand = currentHand();
+    balance += Math.floor(hand.bet / 2);
+    hand.surrendered = true;
+    updateBetUI();
+    renderRound();
+    statusEl.textContent = 'SURRENDERED';
+    setTimeout(goToNextHandOrDealer, 500);
+  });
+
+  // A hand that's already busted or surrendered can't win no matter what
+  // the dealer does, so it doesn't get to force a draw -- if every hand
+  // is already settled, the dealer's hole card still gets shown, but the
+  // dealer stops right there instead of drawing out a hand nobody can
+  // still beat.
+  function runDealerAndResolve() {
+    const live = round.hands.some((h) => !h.surrendered && bjHandSum(h.cards) <= 21);
+    if (live) {
+      while (bjHandSum(round.dealerHand) < 17) bjDraw(round.deck, round.dealerHand, 1);
+    }
+    round.phase = 'done';
+    renderRound();
+
+    const dealerTotal = bjHandSum(round.dealerHand);
+    const messages = [];
+    round.hands.forEach((h, idx) => {
+      const label = round.hands.length > 1 ? `HAND ${idx + 1}` : 'YOU';
+      if (h.surrendered) { messages.push(`${label}: SURRENDERED`); return; }
+      const total = bjHandSum(h.cards);
+      const wager = h.bet;
+      if (total > 21) { messages.push(`${label}: BUST — LOSE ${wager}`); return; }
+      if (dealerTotal > 21) { balance += wager * 2; messages.push(`${label}: DEALER BUSTS — WIN ${wager}`); return; }
+      if (dealerTotal > total) { messages.push(`${label}: LOSE ${wager}`); return; }
+      if (dealerTotal === total) { balance += wager; messages.push(`${label}: PUSH`); return; }
+      balance += wager * 2;
+      messages.push(`${label}: WIN ${wager}`);
+    });
+    statusEl.textContent = messages.join('   ');
+    endRoundUI();
+  }
 
   dealBtn.addEventListener('click', startRound);
 

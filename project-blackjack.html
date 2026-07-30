@@ -52,8 +52,8 @@
 
       <div class="case-section accent-violet reveal">
         <h2>Concept &amp; Rules</h2>
-        <p>A single-player, single-round blackjack game built to run straight from the terminal. Standard rules: closest to 21 without going over wins, a two-card 21 is a blackjack, and Aces count as 11 unless that would bust the hand, in which case they drop to 1 one at a time.</p>
-        <p>Everything &mdash; the deck, the dealer, the hit/stand loop, and the payout logic &mdash; is built from plain Python data structures and control flow. No external libraries beyond the standard-library <code>random</code> module.</p>
+        <p>A single-player, single-round blackjack game built to run straight from the terminal, playing out a real house ruleset rather than just the bare hit/stand loop: dealer peek, insurance, natural blackjack, surrender, double down, and splitting (including the split-Aces exception) are all in play alongside the standard closest-to-21 rules and Ace math.</p>
+        <p>Everything &mdash; the deck, the dealer, every player decision, and the payout logic &mdash; is built from plain Python data structures and control flow. No external libraries beyond the standard-library <code>random</code> module.</p>
       </div>
 
       <div class="case-section accent-cyan reveal">
@@ -68,27 +68,37 @@
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9824;</span>
             <h3>Soft-Ace Resolution</h3>
-            <p>Every draw recounts the Aces in a hand and demotes them from 11 to 1, one at a time, until the total reads 21 or under &mdash; the same check runs for both the player and the dealer.</p>
+            <p>Every hand recounts its Aces and demotes them from 11 to 1, one at a time, until the total reads 21 or under &mdash; the same check runs for the dealer and every player hand, including split hands.</p>
           </div>
           <div class="feature-card accent-amber">
             <span class="feature-icon">&#9829;</span>
-            <h3>Hit or Stand Loop</h3>
-            <p>A simple input loop keeps drawing on "hit" and re-peeking the hand after every card, until the player stands or busts.</p>
+            <h3>Insurance &amp; Dealer Peek</h3>
+            <p>An Ace up-card offers insurance for half the bet; an Ace or ten-value up-card triggers a secret peek at the hole card. A dealer blackjack resolves immediately &mdash; insurance pays 2:1, and the main bet pushes only if the player also has blackjack.</p>
           </div>
           <div class="feature-card accent-blue">
             <span class="feature-icon">&#9830;</span>
-            <h3>Dealer Draws to 17</h3>
-            <p>The dealer only plays after the player's turn ends, and always draws until its hand totals 17 or more &mdash; standard house rules, no peeking ahead.</p>
+            <h3>Natural Blackjack</h3>
+            <p>A two-card 21 (when the dealer doesn't also have one) pays out at 3:2 immediately, without ever entering the hit/stand loop.</p>
           </div>
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9827;</span>
-            <h3>Full Round Resolution</h3>
-            <p>Six explicit outcome branches: both bust (push), dealer bust, a tie, a dealer win, a player win, and a player blackjack paying out at a higher rate.</p>
+            <h3>Double Down &amp; Surrender</h3>
+            <p>Both are first-action-only options on an unsplit two-card hand: double matches the bet for exactly one more card, surrender forfeits half the bet and ends the hand on the spot.</p>
           </div>
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9824;</span>
+            <h3>Splitting, Including Aces</h3>
+            <p>A matching pair can split into two independently played hands (doubling after split is allowed, re-splitting isn't). Split Aces are the exception: each gets exactly one card and stands automatically, with no blackjack bonus on a resulting 21.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9829;</span>
+            <h3>Dealer Draws to 17</h3>
+            <p>The dealer only plays after every player hand is settled, and only draws further if at least one hand is still live to beat &mdash; a bust or surrender can't force the dealer to keep drawing.</p>
+          </div>
+          <div class="feature-card accent-blue">
+            <span class="feature-icon">&#9830;</span>
             <h3>Deck Exhaustion Guard</h3>
-            <p>Both the player's and dealer's draw functions bail out safely if the shared deck ever runs dry mid-round, instead of throwing.</p>
+            <p>Every draw bails out safely if the shared deck ever runs dry mid-round, instead of throwing.</p>
           </div>
         </div>
       </div>
@@ -103,10 +113,18 @@
                 <div class="bj-hand" id="bjDealerHand"></div>
               </div>
               <div class="bj-status" id="bjStatus">PLACE YOUR BET</div>
-              <div class="bj-row">
-                <span class="bj-row-label">YOU<span class="bj-sum" id="bjPlayerSum"></span></span>
-                <div class="bj-hand" id="bjPlayerHand"></div>
+
+              <div class="bj-hands" id="bjHandsWrap">
+                <div class="bj-hand-block active" id="bjHandBlock0">
+                  <span class="bj-row-label" id="bjHandLabel0">YOU<span class="bj-sum" id="bjPlayerSum0"></span></span>
+                  <div class="bj-hand" id="bjPlayerHand0"></div>
+                </div>
+                <div class="bj-hand-block hidden" id="bjHandBlock1">
+                  <span class="bj-row-label" id="bjHandLabel1">HAND 2<span class="bj-sum" id="bjPlayerSum1"></span></span>
+                  <div class="bj-hand" id="bjPlayerHand1"></div>
+                </div>
               </div>
+
               <div class="bj-controls">
                 <div class="bj-chip-row" id="bjBetControls">
                   <span class="bj-chips">CHIPS <span id="bjBalance">500</span></span>
@@ -115,24 +133,33 @@
                   <button type="button" class="tool-btn-sm" id="bjBetPlus">+25</button>
                   <button type="button" class="tool-btn" id="bjDealBtn">DEAL</button>
                 </div>
+                <div class="bj-chip-row hidden" id="bjInsuranceControls">
+                  <span class="bj-chips">INSURANCE (<span id="bjInsAmt">0</span>)?</span>
+                  <button type="button" class="tool-btn-sm" id="bjInsYesBtn">YES</button>
+                  <button type="button" class="tool-btn-sm" id="bjInsNoBtn">NO</button>
+                </div>
                 <div class="bj-play-row hidden" id="bjPlayControls">
                   <button type="button" class="tool-btn" id="bjHitBtn">HIT</button>
                   <button type="button" class="tool-btn" id="bjStandBtn">STAND</button>
+                  <button type="button" class="tool-btn hidden" id="bjDoubleBtn">DOUBLE</button>
+                  <button type="button" class="tool-btn hidden" id="bjSplitBtn">SPLIT</button>
+                  <button type="button" class="tool-btn hidden" id="bjSurrenderBtn">SURRENDER</button>
                 </div>
               </div>
             </div>
           </div>
           <div>
             <p class="demo-live-tag"><span class="demo-live-dot"></span> LIVE DEMO &mdash; RUNS IN YOUR BROWSER</p>
-            <p>A JS port of <code>main.py</code>'s own deck, soft-Ace, and dealer-threshold logic &mdash; not a separate reimplementation. Adjust the bet, deal, and hit or stand until you either bust or stand on your total.</p>
-            <p>Payouts: a standard win pays 1:1, a two-card blackjack pays 3:2, a push returns your bet, and a bust (yours, with the dealer still in play) loses it. One quirk kept faithfully from the source: the dealer always plays its hand out to 17+, even in rounds you've already busted &mdash; exactly what <code>roundFinish()</code> does.</p>
+            <p>A JS port of <code>main.py</code>'s own deck, soft-Ace, insurance/peek, and dealer-threshold logic &mdash; not a separate reimplementation. Adjust the bet and deal; hit, stand, double, split, or surrender as the hand allows.</p>
+            <p>Dealer shows an Ace or a ten-value card? The dealer secretly checks its own hole card for blackjack before you act, exactly like a real table &mdash; an Ace also offers insurance. A two-card 21 pays 3:2 immediately. Splitting a pair plays each half as its own hand (doubling after split is allowed, re-splitting isn't); split Aces get exactly one card each and stand automatically, with no blackjack bonus. Standard win pays 1:1, push returns your bet, surrender returns half. A bust is an unconditional loss the instant it happens &mdash; the dealer only draws its hand out if a live hand is still around to beat.</p>
           </div>
         </div>
       </div>
 
       <div class="case-section accent-amber reveal">
         <h2>From Terminal to Browser</h2>
-        <p>The original is a single self-contained round, run once from the command line, with placeholder payout text (<code>+, winnings ,!</code>) in place of real numbers &mdash; it was written to prove the rules logic, not to track a bankroll. The browser demo above loops rounds, reshuffles a fresh deck on every deal, and replaces that placeholder text with a real chip balance and real payout math, while keeping the exact same card values, soft-Ace counting, and dealer-stands-on-17 behavior as <code>main.py</code>.</p>
+        <p>The original is a single self-contained round, run once from the command line &mdash; it was written to prove the rules logic, not to track a bankroll, so it used placeholder payout text instead of real numbers. The browser demo above loops rounds, reshuffles a fresh deck on every deal, and replaces that placeholder text with a real chip balance and real payout math, while keeping the exact same card values, soft-Ace counting, insurance/peek, split, and dealer-stands-on-17 behavior as <code>main.py</code>.</p>
+        <p>Two earlier bugs in the original terminal script got fixed here rather than kept: the dealer's hole card used to leak into the console output the moment it was dealt (before the player even acted), and a player bust used to still let the dealer draw its hand all the way out &mdash; occasionally turning a lost hand into a push if the dealer happened to bust too. Both are fixed in <code>main.py</code> itself now: the hole card stays hidden until the peek or the dealer's own turn reveals it, and a bust is an immediate, unconditional loss.</p>
       </div>
 
       <div class="case-section accent-blue reveal">

@@ -2452,6 +2452,29 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 
 .bj-chips span, .bj-bet-readout span { color: var(--cyan-soft); }
 
+.bj-hands { display: flex; gap: 0.8rem; }
+
+.bj-hand-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-radius: 6px;
+  padding: 0.4rem;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bj-hand-block.active {
+  border-color: var(--accent-border-strong, var(--border-strong));
+  box-shadow: 0 0 12px var(--accent-glow, rgba(124, 107, 255, 0.3));
+}
+
+.bj-hand-block.hidden { display: none; }
+
+.bj-hand-block .bj-hand { min-height: 60px; }
+
 .back-link {
   display: inline-flex;
   align-items: center;
