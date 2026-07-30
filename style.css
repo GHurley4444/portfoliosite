@@ -486,6 +486,53 @@ body.custom-cursor-active button {
 
 @keyframes blink { 50% { opacity: 0; } }
 
+/* ===================== Page load reveal (CRT top-to-bottom wipe) ===================== */
+/* A covering panel that "wipes away" from top to bottom over the real
+   page on load, with a bright scanline band riding its leading edge --
+   reads like an old page rendering in top-down as it streams in, with a
+   CRT scan-flicker. Created/appended by runPageRevealSequence() in
+   script.js and removed once its animation finishes; never created at
+   all for reduced-motion users (checked in JS before either element
+   exists, so there's nothing to override here).
+   clip-path and transform only -- no top/left/width/height -- so this
+   stays compositor-only, same reasoning as the arcade intro's zoom fix:
+   animating layout properties here would fight the real page's own
+   layout/paint for the same ~1.4s, right when it's least affordable. */
+.page-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--bg);
+  pointer-events: none;
+  clip-path: inset(0 0 0 0);
+  animation: pageRevealWipe 1.4s steps(48, end) forwards;
+}
+
+@keyframes pageRevealWipe {
+  to { clip-path: inset(100% 0 0 0); }
+}
+
+.page-reveal-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 48px;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(55, 244, 255, 0.4) 0px,
+    rgba(55, 244, 255, 0.4) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  box-shadow: 0 0 18px rgba(55, 244, 255, 0.55);
+  animation: pageRevealScanMove 1.4s steps(48, end) forwards;
+}
+
+@keyframes pageRevealScanMove {
+  to { transform: translateY(calc(100vh - 48px)); }
+}
+
 /* ===================== Header / Nav ===================== */
 .site-header {
   position: fixed;

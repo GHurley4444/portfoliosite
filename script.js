@@ -113,8 +113,13 @@ function startMiniTronPreview(canvas) {
 //      screen, then cross-fades into a small mockup of the site itself
 //      (same fonts/gradient/logo, not a live copy -- see arcadeSitePreview
 //      comment below) -- reads as "the site loading up" on the screen.
-//   2. After a hold, the overlay is removed outright -- a hard cut
-//      straight to the real page, no fade/zoom/transition of any kind.
+//   2. After a hold, the overlay is removed outright -- a hard cut --
+//      and that hard cut chains straight into runPageRevealSequence()
+//      (below), so the real page underneath does its own top-to-bottom
+//      load-in wipe right as the cabinet disappears.
+// Returns true if the intro actually ran (first visit this session, not
+// reduced-motion), false if it was skipped outright -- callers use that
+// to know whether they still need to trigger the page-reveal themselves.
 function runIntroSequence() {
   const overlay = document.getElementById('introOverlay');
   const canvas = document.getElementById('introCanvas');
@@ -123,14 +128,14 @@ function runIntroSequence() {
   const skipBtn = document.getElementById('introSkip');
   const label = document.getElementById('introLabel');
   const sitePreview = document.getElementById('arcadeSitePreview');
-  if (!overlay || !canvas || !cabinet || !screenEl || !skipBtn) return;
+  if (!overlay || !canvas || !cabinet || !screenEl || !skipBtn) return false;
 
   let seen = null;
   try { seen = sessionStorage.getItem('gh_intro_seen'); } catch (e) {}
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (seen || reduced) {
     overlay.remove();
-    return;
+    return false;
   }
 
   let stopPreview = null;
@@ -163,6 +168,7 @@ function runIntroSequence() {
     if (stopPreview) stopPreview();
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
     overlay.remove(); // hard cut -- no fade, no zoom, straight to the page
+    runPageRevealSequence(); // ...then the real page does its own load-in wipe
   }
 
   function onKey() { finish(); }
@@ -172,6 +178,38 @@ function runIntroSequence() {
   setTimeout(() => skipBtn.classList.add('visible'), 500);
   const sitePreviewTimer = setTimeout(showSitePreview, 1200); // canvas preview -> site mockup
   const finishTimer = setTimeout(finish, 5100); // hold, then cut straight to the real page
+  return true;
+}
+
+// ===================== Page load reveal (CRT-style top-to-bottom wipe) =====================
+// A covering panel wipes away from top to bottom over the real page,
+// like an old page rendering in top-down as it streams in, with a
+// bright scanline band riding the wipe's leading edge for a brief
+// CRT-scan flicker as it passes. Entirely CSS-driven (a clip-path
+// animation on the cover, a translateY animation on the scan band --
+// no layout-triggering properties, same lesson learned from the arcade
+// intro's lag issue earlier); this function just creates the elements,
+// lets the CSS animations run, and removes them once done.
+//
+// Runs after the arcade intro's hard cut on first visit (chained from
+// finish() above), or directly on every other page load/page (see the
+// runIntroSequence() return value check in the init block below).
+function runPageRevealSequence() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const reveal = document.createElement('div');
+  reveal.className = 'page-reveal';
+  reveal.setAttribute('aria-hidden', 'true');
+  const scan = document.createElement('div');
+  scan.className = 'page-reveal-scan';
+  reveal.appendChild(scan);
+  document.body.appendChild(reveal);
+
+  const REVEAL_MS = 1400;
+  reveal.addEventListener('animationend', () => reveal.remove());
+  // Fallback in case animationend doesn't fire for some reason (e.g. the
+  // tab was backgrounded and the animation got suspended/skipped).
+  setTimeout(() => { if (reveal.isConnected) reveal.remove(); }, REVEAL_MS + 300);
 }
 
 // ===================== Hero eyebrow typewriter =====================
@@ -1460,7 +1498,15 @@ function setupFooterYear() {
 // ===================== Init =====================
 document.addEventListener('DOMContentLoaded', () => {
   setupBackgrounds();
-  runIntroSequence();
+  // runIntroSequence() only exists/does anything on index.html, and only
+  // actually plays once per session there; runPageRevealSequence() is
+  // the general "page loads in" effect for every page. If the arcade
+  // intro is going to play, it chains into the reveal itself once it
+  // hard-cuts (so the reveal happens on the real page, not underneath
+  // the still-visible cabinet) -- otherwise (other pages, or the intro
+  // was already seen/skipped by reduced-motion) trigger it directly here.
+  const introPlayed = runIntroSequence();
+  if (!introPlayed) runPageRevealSequence();
   setupTypewriter();
   setupScrambleOnLoad();
   setupHeaderScroll();
