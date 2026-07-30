@@ -308,33 +308,85 @@ body.custom-cursor-active button {
 
 .arcade-cabinet {
   width: min(78vw, 380px);
+  --arcade-red: #ff4d5e;
+  filter: drop-shadow(0 30px 70px rgba(0, 0, 0, 0.65));
 }
 
+/* Marquee: real cabinet marquees are a wide, rounded-top backlit sign --
+   grid backdrop, chrome/rainbow wordmark, flared wider than the cabinet
+   body below it. Widened 12% past the cabinet width and pulled back to
+   center to get that flare instead of a flat rectangle stack. */
 .arcade-marquee {
-  background: linear-gradient(180deg, #12202f, #0a141f);
-  border: 1px solid var(--border);
+  position: relative;
+  width: 112%;
+  margin: 0 0 0 -6%;
+  background:
+    repeating-linear-gradient(0deg, rgba(55, 244, 255, 0.07) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(90deg, rgba(55, 244, 255, 0.07) 0 1px, transparent 1px 9px),
+    linear-gradient(180deg, #12202f, #0a141f);
+  border: 2px solid var(--violet);
   border-bottom: none;
-  border-radius: 10px 10px 0 0;
-  padding: 0.6rem 1rem;
+  border-radius: 46px 46px 0 0;
+  padding: 0.85rem 1rem 1rem;
   text-align: center;
   transition: opacity 0.35s ease;
+  box-shadow: inset 0 0 0 2px rgba(55, 244, 255, 0.25), inset 0 -10px 18px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+.arcade-marquee::before {
+  content: '';
+  position: absolute;
+  left: 10px; right: 10px; top: 6px; bottom: -2px;
+  border: 1px solid var(--amber);
+  border-radius: 38px 38px 0 0;
+  opacity: 0.45;
+  pointer-events: none;
 }
 .arcade-marquee span {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--cyan);
-  letter-spacing: 0.3em;
-  font-size: 0.85rem;
-  text-shadow: var(--glow-md);
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  font-size: 1.15rem;
+  background: linear-gradient(100deg, var(--cyan) 0%, var(--blue) 30%, var(--violet) 55%, var(--amber) 80%, var(--cyan) 100%);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: heroGradient 6s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(55, 244, 255, 0.45));
 }
 
+/* Screen bezel: metal struts flanking the tube, standing in for the
+   chrome side panels on the real cabinet (concentric-ring decals, rivets
+   down the middle). Extra horizontal padding on the frame makes room for
+   them without touching the screen itself. */
 .arcade-screen-frame {
+  position: relative;
   background: linear-gradient(160deg, #171f2b, #0a0f16);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  padding: 14px;
+  border-left: 2px solid var(--border);
+  border-right: 2px solid var(--border);
+  padding: 14px 24px;
   transition: opacity 0.35s ease;
 }
+.arcade-screen-frame::before,
+.arcade-screen-frame::after {
+  content: '';
+  position: absolute;
+  top: 18px; bottom: 18px;
+  width: 11px;
+  background: linear-gradient(180deg, #34424f, #0d131b 35%, #34424f 65%, #0d131b);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 3px rgba(0, 0, 0, 0.7),
+    0 -14px 0 -11px rgba(55, 244, 255, 0.6), 0 -14px 2px -10px rgba(55, 244, 255, 0.3),
+    0 14px 0 -11px rgba(55, 244, 255, 0.6), 0 14px 2px -10px rgba(55, 244, 255, 0.3);
+}
+.arcade-screen-frame::before { left: 6px; }
+.arcade-screen-frame::after { right: 6px; }
 
 .arcade-screen {
   position: relative;
@@ -458,39 +510,83 @@ body.custom-cursor-active button {
   pointer-events: none;
 }
 
+/* Control panel: wider than the screen bezel (like the real cabinet's
+   panel stepping out past the body), a cyan trim strip along the front
+   edge, a blue ball-top joystick, and red fire buttons -- the two colors
+   that read as "arcade cabinet" at a glance on the reference machine. */
 .arcade-panel {
+  position: relative;
+  width: 108%;
+  margin: 0 0 0 -4%;
   background: linear-gradient(180deg, #0e1620, #060a10);
   border: 1px solid var(--border);
   border-top: none;
-  border-radius: 0 0 10px 10px;
-  padding: 0.7rem 1rem;
+  border-radius: 0 0 14px 14px;
+  padding: 0.8rem 1rem 0.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
+  gap: 1.1rem;
   transition: opacity 0.35s ease;
 }
+.arcade-panel::before {
+  content: '';
+  position: absolute;
+  left: 8px; right: 8px; top: 0;
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: var(--glow-sm);
+  opacity: 0.7;
+}
 .arcade-stick {
-  width: 8px; height: 22px;
-  background: var(--text-dim);
+  width: 7px; height: 24px;
+  background: linear-gradient(180deg, #4a5a68, #1c242c);
   border-radius: 3px;
   position: relative;
 }
 .arcade-stick::before {
   content: '';
   position: absolute;
-  top: -5px; left: 50%;
+  top: -7px; left: 50%;
   transform: translateX(-50%);
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: var(--violet);
-  box-shadow: var(--glow-sm);
-}
-.arcade-btn {
   width: 14px; height: 14px;
   border-radius: 50%;
-  background: var(--amber);
-  box-shadow: var(--glow-sm);
+  background: radial-gradient(circle at 35% 30%, var(--cyan-soft), var(--blue) 65%, #0a3d7a);
+  box-shadow: 0 0 8px rgba(43, 107, 255, 0.7);
+}
+.arcade-btn {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8f9c, var(--arcade-red) 65%, #a30016);
+  box-shadow: 0 0 7px rgba(255, 77, 94, 0.65);
+}
+
+/* Coin door: a narrow dark strip under the control panel with two slot
+   dots and a "25¢ per play" callout, the last recognizable landmark on
+   the lower cabinet before the base. */
+.arcade-coin-door {
+  margin-top: 3px;
+  background: linear-gradient(180deg, #0a0f16, #05080c);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: opacity 0.35s ease;
+}
+.arcade-coin-slot {
+  width: 5px; height: 9px;
+  border-radius: 2px;
+  background: #000;
+  border: 1px solid rgba(255, 184, 77, 0.4);
+}
+.arcade-coin-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dimmer);
 }
 
 .intro-skip {
