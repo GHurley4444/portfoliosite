@@ -255,6 +255,7 @@ function createGridEngine() {
   const PREDICT_AHEAD = 4; // cells to project an opponent forward when targeting it
   const DANGER_SPACE_THRESHOLD = 22; // base danger threshold, scaled per-bot by dangerMultiplier
   const ESCAPE_AGGRESSION_CUT = 0.2; // aggression is throttled to this fraction in escape mode
+  const COLLISION_RISK_PENALTY = 35; // deterrent for stepping into an opponent's likely next cell
   const COUNTDOWN_SECONDS = 3;
   const COLORS = ['#37f4ff', '#7c6bff', '#ffb84d', '#2b6bff'];
 
@@ -455,6 +456,19 @@ function createGridEngine() {
     const inDanger = maxSpace < DANGER_SPACE_THRESHOLD * bot.dangerMultiplier;
     const aggressionScale = inDanger ? ESCAPE_AGGRESSION_CUT : 1;
 
+    // Naive one-tick lookahead for every other rider, assuming they keep
+    // going straight. Not always true, but it's what a real player reads
+    // off an opponent's heading — enough to flinch away from a cell two
+    // bots are both about to plow into instead of only noticing after
+    // they're both dead. Cautious personalities weigh this heavily;
+    // reckless ones (high aggression) still shrug and take the trade.
+    const incoming = alive
+      .filter((o) => o !== bot)
+      .map((o) => {
+        const d = DIRS[o.dir];
+        return { x: o.x + d.x, y: o.y + d.y };
+      });
+
     const scored = options.map(({ dir, nx, ny, space }) => {
       let score = space;
       if (dir === bot.dir) score += bot.straightBonus;
@@ -462,6 +476,8 @@ function createGridEngine() {
         const dist = Math.abs(target.x - nx) + Math.abs(target.y - ny);
         score -= dist * bot.aggression * aggressionScale;
       }
+      const headOnRisk = incoming.some((p) => p.x === nx && p.y === ny);
+      if (headOnRisk) score -= COLLISION_RISK_PENALTY / bot.aggression;
       score += Math.random() * 0.5; // light jitter so ties don't look robotic
       return { dir, score };
     });
