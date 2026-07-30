@@ -262,13 +262,11 @@ body.custom-cursor-active button {
 /* ===================== Arcade intro (replaces the old boot log) ===================== */
 /* An arcade cabinet with a tiny live Tron preview on its screen, which
    cross-fades into a small site mockup and holds there for a few
-   seconds, then the SCREEN ITSELF (not the whole cabinet) is pulled out
-   of the cabinet's layout via a FLIP and expanded from its real
-   on-screen rect to fill the full viewport -- see the .zoom-expand rule
-   below and runIntroSequence()'s zoomIn() in script.js. Growing only the
-   screen (rather than transform-scaling the whole cabinet, which just
-   ballooned the bezel/marquee/joystick into a blurry mess) is what
-   actually reads as "the camera pushing into the screen's contents". */
+   seconds -- then runIntroSequence() in script.js just removes the
+   overlay outright. No fade/zoom/transition: earlier versions tried a
+   zoom-through-the-screen effect across several iterations, but it was
+   dropped by request in favor of a plain hard cut straight to the real
+   page, which is simpler and has nothing left to go wrong. */
 .intro-overlay {
   position: fixed;
   inset: 0;
@@ -278,12 +276,6 @@ body.custom-cursor-active button {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
-
-.intro-overlay.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .arcade-cabinet {
@@ -323,49 +315,6 @@ body.custom-cursor-active button {
   border-radius: 6px;
   overflow: hidden;
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), inset 0 0 2px var(--cyan);
-}
-
-/* Applied by zoomIn() in script.js: this rule alone jumps the screen to
-   position:fixed/inset:0 (full viewport) instantly and unanimated --
-   that's just a one-time layout change, not something to transition.
-   The JS then fakes the screen's *old* small appearance using an inline
-   `transform: translate(...) scale(...)` and animates that transform
-   back to identity. Animating only `transform` (never top/left/width/
-   height) keeps this compositor-only/GPU-accelerated instead of forcing
-   a full layout recalculation on every frame, which is what made the
-   previous top/left/width/height version feel laggy. */
-.arcade-screen.zoom-expand {
-  position: fixed;
-  inset: 0;
-  width: auto;
-  height: auto;
-  z-index: 1000;
-  border-radius: 0;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-/* The site-mockup preview is deliberately left visible and NOT faded
-   here -- it's the thing that should look like it's expanding onto the
-   screen as the box grows (see zoomIn() in script.js). Only the leftover
-   mini Tron canvas (already fully covered by the mockup, but still
-   technically present underneath) and the screen's CRT label/glare
-   textures fade out, since those read as arcade-screen furniture rather
-   than "the website". */
-.arcade-screen.zoom-expand canvas,
-.arcade-screen.zoom-expand .arcade-screen-label,
-.arcade-screen.zoom-expand .arcade-screen-glare {
-  transition: opacity 0.4s ease;
-  opacity: 0;
-  /* .arcade-screen-label also has its own infinite `blink` animation --
-     CSS animations take precedence over plain opacity declarations in
-     the cascade, so without turning it off here too, the label would
-     keep blinking through its own opacity:0 for as long as the
-     animation runs. See the fuller explanation on .hidden below, where
-     this exact bug was actually surfacing (this rule was mostly moot
-     by comparison, since .hidden already applies by the time zoom
-     starts, but the same fix belongs here for the same reason). */
-  animation: none;
 }
 
 .arcade-screen canvas {
@@ -534,10 +483,6 @@ body.custom-cursor-active button {
 }
 .intro-skip.visible { opacity: 1; }
 .intro-skip:hover { color: var(--cyan); border-color: var(--cyan); }
-
-@media (prefers-reduced-motion: reduce) {
-  .arcade-screen, .intro-overlay { transition: none; }
-}
 
 @keyframes blink { 50% { opacity: 0; } }
 

@@ -106,24 +106,15 @@ function startMiniTronPreview(canvas) {
 }
 
 // ===================== Arcade intro sequence =====================
-// Replaces the old typed-out fake boot log with three beats:
-//   1. Arcade cabinet appears, a tiny live Tron preview plays on its screen.
-//   2. That preview cross-fades into a small mockup of the site itself
+// Replaces the old typed-out fake boot log with two beats, no zoom/
+// transition anymore (that was tried across several iterations and
+// dropped by request in favor of something simpler and more reliable):
+//   1. Arcade cabinet appears, a tiny live Tron preview plays on its
+//      screen, then cross-fades into a small mockup of the site itself
 //      (same fonts/gradient/logo, not a live copy -- see arcadeSitePreview
-//      comment below) -- reads as "the site loading up" on the screen,
-//      held for a few seconds so it actually registers.
-//   3. The SCREEN ELEMENT ITSELF -- not the whole cabinet -- is pulled out
-//      of the cabinet's layout via a FLIP (First/Last/Invert/Play) and
-//      expanded from its real on-screen rect to the full viewport. Earlier
-//      versions scaled the whole cabinet (bezel, marquee, joystick and
-//      all) with a CSS transform, which just made the entire cabinet
-//      balloon into a blurry, cropped mess rather than reading as a zoom
-//      into the screen's contents -- and had it fading out at the same
-//      time it was supposed to be growing, so the growth was barely
-//      visible. This version grows only the black screen rectangle
-//      (its mockup content fading out early so it doesn't stretch),
-//      leaving the rest of the cabinet chrome physically behind/covered
-//      as the screen's edges push out to the edges of the viewport.
+//      comment below) -- reads as "the site loading up" on the screen.
+//   2. After a hold, the overlay is removed outright -- a hard cut
+//      straight to the real page, no fade/zoom/transition of any kind.
 function runIntroSequence() {
   const overlay = document.getElementById('introOverlay');
   const canvas = document.getElementById('introCanvas');
@@ -148,103 +139,39 @@ function runIntroSequence() {
   });
 
   let sitePreviewShown = false;
-  let sitePreviewShownAt = 0;
   function showSitePreview() {
     if (sitePreviewShown) return;
     sitePreviewShown = true;
-    sitePreviewShownAt = Date.now();
     if (label) label.classList.add('hidden');
     if (sitePreview) sitePreview.classList.add('visible');
   }
 
-  const EXPAND_MS = 1300;
-  // Matches .arcade-site-preview's own opacity transition duration (0.7s)
-  // plus a small margin -- see the wait below.
-  const MOCKUP_FADE_MS = 750;
-
   let finished = false;
-  function zoomIn() {
+  function finish() {
     if (finished) return;
     finished = true;
     window.removeEventListener('keydown', onKey);
-    skipBtn.removeEventListener('click', zoomIn);
-    skipBtn.classList.remove('visible');
+    skipBtn.removeEventListener('click', finish);
+    // Cancel whichever of the two beat timers hasn't fired yet -- without
+    // this, an early skip still left the site-mockup timer live, which
+    // would go on to touch classList on elements inside an overlay
+    // that's already been removed from the DOM a few seconds earlier.
+    // Harmless in practice (no visible effect), but pointless work on a
+    // detached element, worth cancelling cleanly.
+    clearTimeout(sitePreviewTimer);
+    clearTimeout(finishTimer);
     if (stopPreview) stopPreview();
     try { sessionStorage.setItem('gh_intro_seen', '1'); } catch (e) {}
-
-    // showSitePreview() is idempotent and records when it actually ran
-    // (sitePreviewShownAt), whether that was the natural 1200ms beat or
-    // right now because zoomIn fired early via skip/keydown -- so this
-    // one formula covers both cases. If the mockup's own 0.7s fade-in
-    // hasn't had time to finish yet, wait out whatever's left of it
-    // before expanding. Otherwise the growing screen (which covers the
-    // cabinet chrome within a couple hundred ms) carries the mockup away
-    // before it's ever become visible -- the reported "black square"
-    // was this: the content wasn't faded to black, it just hadn't
-    // faded IN yet.
-    showSitePreview();
-    const elapsed = Date.now() - sitePreviewShownAt;
-    const waitMore = Math.max(0, MOCKUP_FADE_MS - elapsed);
-
-    setTimeout(startExpand, waitMore);
+    overlay.remove(); // hard cut -- no fade, no zoom, straight to the page
   }
 
-  function startExpand() {
-    // FLIP, done with `transform` only (not top/left/width/height): those
-    // are layout properties, so animating them forces the browser to
-    // recompute layout on every single frame -- expensive, and the
-    // direct cause of the reported lag, getting worse as the box
-    // approaches full viewport size. transform (translate + scale) is
-    // compositor-only: the browser can animate it on the GPU without
-    // ever touching layout, which is what actually makes this smooth.
-    const firstRect = screenEl.getBoundingClientRect();
-
-    // Jump straight to the final layout (full-viewport, via the
-    // position:fixed/inset:0 in the .zoom-expand rule) -- one instant,
-    // unanimated layout change, not an animated one.
-    screenEl.classList.add('zoom-expand');
-    const lastRect = screenEl.getBoundingClientRect(); // now ~{0,0,vw,vh}
-
-    // Fake the "before" appearance using only transform: scale it down
-    // and shift it back so it renders exactly where/how small it was
-    // a moment ago, even though its actual box is now full-viewport.
-    const scaleX = firstRect.width / lastRect.width;
-    const scaleY = firstRect.height / lastRect.height;
-    const dx = (firstRect.left + firstRect.width / 2) - (lastRect.left + lastRect.width / 2);
-    const dy = (firstRect.top + firstRect.height / 2) - (lastRect.top + lastRect.height / 2);
-
-    screenEl.style.transition = 'none';
-    screenEl.style.transform = `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY})`;
-
-    // Force a style/layout flush so the browser commits that faked
-    // "before" transform before we clear it below. Without this, both
-    // writes can get batched into a single style recalc and the
-    // transition never plays (the classic instant-jump trap).
-    void screenEl.offsetHeight;
-
-    requestAnimationFrame(() => {
-      screenEl.style.transition = `transform ${EXPAND_MS}ms ease-in-out`;
-      screenEl.style.transform = 'translate(0, 0) scale(1, 1)';
-    });
-
-    // Once the screen has finished expanding to cover the full viewport,
-    // it's already visually indistinguishable from a blank overlay --
-    // a short opacity fade on the whole thing reveals the real site
-    // underneath, then the overlay is removed for good.
-    setTimeout(() => {
-      overlay.style.transition = 'opacity 0.25s ease';
-      overlay.style.opacity = '0';
-      setTimeout(() => overlay.remove(), 300);
-    }, EXPAND_MS);
-  }
-
-  function onKey() { zoomIn(); }
+  function onKey() { finish(); }
   window.addEventListener('keydown', onKey, { once: true });
-  skipBtn.addEventListener('click', zoomIn);
+  skipBtn.addEventListener('click', finish);
 
   setTimeout(() => skipBtn.classList.add('visible'), 500);
-  setTimeout(showSitePreview, 1200); // phase 2: Tron preview -> site mockup
-  setTimeout(zoomIn, 5100); // phase 3: zoom through the screen (mockup held ~3.9s)
+  const sitePreviewTimer = setTimeout(showSitePreview, 1200); // canvas preview -> site mockup
+  const finishTimer = setTimeout(finish, 5100); // hold, then cut straight to the real page
 }
 
 // ===================== Hero eyebrow typewriter =====================
