@@ -1189,6 +1189,31 @@ function setupHeaderScroll() {
   onScroll();
 }
 
+// ===================== Content-hover dim (cursor-lag fix) =====================
+// Drives .nav-hover and .content-hover (see style.css) via plain
+// mouseenter/mouseleave listeners instead of CSS :has() selectors.
+// :has() on body watching hover state across the header/main's whole
+// subtree meant the browser was re-running that relational match on
+// every hover-state change near the header or while scrolling through
+// the page -- real, continuous main-thread cost, competing with the
+// custom cursor's own per-frame rAF loop for the same frame budget.
+// A couple of event listeners toggling a class are effectively free by
+// comparison, with identical visual behavior.
+function setupHoverDimClasses() {
+  const header = document.getElementById('siteHeader');
+  if (header) {
+    header.addEventListener('mouseenter', () => document.body.classList.add('nav-hover'));
+    header.addEventListener('mouseleave', () => document.body.classList.remove('nav-hover'));
+  }
+
+  const main = document.querySelector('main');
+  const footer = document.querySelector('.site-footer');
+  [main, footer].filter(Boolean).forEach((el) => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('content-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('content-hover'));
+  });
+}
+
 // ===================== Scroll-spy nav =====================
 function setupScrollSpy() {
   const sections = document.querySelectorAll('main section[id]');
@@ -1557,6 +1582,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTypewriter();
   setupScrambleOnLoad();
   setupHeaderScroll();
+  setupHoverDimClasses();
   setupScrollSpy();
   setupReveal();
   setupCursorGlow();

@@ -107,9 +107,16 @@ a { color: inherit; text-decoration: none; }
 /* The cycles run at full brightness by default, but that glow can fight
    with the text the moment it fades back in on hover. Dim the canvas
    itself while a reader is actually hovering the content, then let it
-   brighten back up as soon as they move on. */
-body.bg-lightcycle:has(main:hover) .lightcycle-bg,
-body.bg-lightcycle:has(.site-footer:hover) .lightcycle-bg {
+   brighten back up as soon as they move on.
+   Driven by a plain .content-hover class (toggled in script.js via
+   mouseenter/mouseleave on main/.site-footer) rather than a :has()
+   selector -- :has() forces the browser to re-run this relational match
+   against body on every hover-state change anywhere inside main, which
+   is most of the page and where the mouse spends most of its time.
+   That's real, continuous main-thread cost competing with the custom
+   cursor's own per-frame rAF loop; a couple of plain event listeners
+   toggling a class are effectively free by comparison. */
+body.bg-lightcycle.content-hover .lightcycle-bg {
   opacity: 0.22;
 }
 
@@ -122,16 +129,21 @@ body.bg-lightcycle:has(.site-footer:hover) .lightcycle-bg {
    default background for every visitor, that dimmed the whole page on
    every fresh load until the mouse moved, whether or not anyone was
    playing. Hovering a faded area during gameplay brings it back to
-   full opacity so it's still readable on demand; the nav-hover case
-   reverts on its own once the mouse leaves the header, since :has()
-   is already tracking that directly. Links/buttons stay fully
-   clickable throughout — opacity doesn't touch pointer events. The
-   header itself stays out of this entirely — it always needs to be
-   legible, and never sits over the game area anyway. */
+   full opacity so it's still readable on demand.
+   The nav-hover trigger is a plain .nav-hover class (toggled in
+   script.js via mouseenter/mouseleave on the header), not a :has()
+   selector -- see the .content-hover comment above for why: :has() on
+   body watching hover state across the header's subtree is real,
+   continuous main-thread cost right where the mouse spends a lot of
+   time, competing with the custom cursor's own per-frame work. Links/
+   buttons stay fully clickable throughout — opacity doesn't touch
+   pointer events. The header itself stays out of this entirely — it
+   always needs to be legible, and never sits over the game area
+   anyway. */
 body.game-active main,
 body.game-active .site-footer,
-body:has(.site-header:hover) main,
-body:has(.site-header:hover) .site-footer {
+body.nav-hover main,
+body.nav-hover .site-footer {
   opacity: 0.16;
   transition: opacity 0.4s ease;
 }
