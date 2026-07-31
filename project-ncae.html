@@ -52,9 +52,9 @@
 
       <div class="case-section accent-blue reveal">
         <h2>The Competition</h2>
-        <p>NCAE Cyber Games isn't a straight jeopardy-style CTF. Most of the score comes from live Blue Team defense: each team is handed a small fleet of VMs (services like DNS, web, file shares, and a database, running across a mix of Windows and Linux) and has to keep them online and legitimate while a dedicated Red Team of professionals attacks continuously for the length of the event, trying to knock services down, plant persistence, and lock teams out of their own machines. On top of that, teams work a separate CTF challenge set for additional points, and write up an "Inject" (a short business-style incident report) partway through, so the event tests communication under pressure as much as it tests the technical response.</p>
+        <p>I competed in the Maryland regional of the NCAE Cyber Games. It isn't a straight jeopardy-style CTF. Most of the score comes from live Blue Team defense: each team is handed a small fleet of VMs (services like DNS, web, file shares, and a database, running across a mix of Windows and Linux) and has to keep them online and legitimate while a dedicated Red Team of professionals attacks continuously for the length of the event, trying to knock services down, plant persistence, and lock teams out of their own machines. On top of that, teams work a separate CTF challenge set for additional points, and write up an "Inject" (a short business-style incident report) partway through, so the event tests communication under pressure as much as it tests the technical response.</p>
         <div class="case-todo">
-          <strong>TODO (confirm and fill in):</strong> the specific regional (which NCAE Cyber Games regional we competed in and when), our team name/size and my role on it, and how the team placed or scored.
+          <strong>TODO (confirm and fill in):</strong> our team name/size and my role on it, and how the team placed or scored.
         </div>
       </div>
 
@@ -82,9 +82,9 @@
       <div class="case-section accent-amber reveal">
         <h2>Standout Challenge: Recovering Locked-Out VMs</h2>
         <p>The moment that best represents the event for me: at multiple points during the competition, we lost administrative access to several of our own VMs mid-defense (exactly the outcome the Red Team was going for, since a box you can't log into is a box you can't defend). Rather than treat each lockout as a rebuild-from-scratch situation, which would have cost us time we didn't have, I worked through several different recovery strategies to get back in without wiping and starting over.</p>
-        <p>The one that mattered most was going in through the boot menu: interrupting the normal boot process to reach recovery options that don't depend on already having a working login (booting into a Windows recovery/advanced-options environment on the Windows boxes, or into single-user/rescue mode via the boot loader on the Linux boxes), then using that access to reset credentials, undo whatever the Red Team had changed to keep us out, and hand the machine back to the rest of the team. It's a technique I'd mostly used for legitimate lost-password recovery before this, and using it live, on a real clock, against someone actively fighting to keep the door shut, is what made it click as a genuinely useful tool rather than just a fallback.</p>
+        <p>The box in question was a Windows VM, and the technique that mattered most was going in through the boot menu: interrupting the normal boot process to reach the Windows recovery/advanced-options environment, which doesn't depend on already having a working login. From there I could reset credentials, undo whatever the Red Team had changed to keep us out, and hand the machine back to the rest of the team. It's a technique I'd mostly used for legitimate lost-password recovery before this, and using it live, on a real clock, against someone actively fighting to keep the door shut, is what made it click as a genuinely useful tool rather than just a fallback.</p>
         <div class="case-todo">
-          <strong>TODO (add specifics if I want to expand this):</strong> which host(s) this happened on (Windows vs. Linux, what service they ran), roughly how many times it happened over the event, and whether a screenshot or note from the day exists to pair with this write-up.
+          <strong>TODO (add specifics if I want to expand this):</strong> which service that box ran, roughly how many times this happened over the event, and whether a screenshot or note from the day exists to pair with this write-up.
         </div>
       </div>
 
@@ -94,8 +94,6 @@
         <div class="tech-tags">
           <span>Windows Server</span>
           <span>Windows Recovery Environment</span>
-          <span>Linux</span>
-          <span>GRUB / Rescue Mode</span>
           <span>Active Directory</span>
           <span>DNS</span>
           <span>SMB</span>

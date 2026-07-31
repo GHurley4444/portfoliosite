@@ -340,17 +340,28 @@ function setupCustomCursor() {
   let mouseY = window.innerHeight / 2;
   let ringX = mouseX;
   let ringY = mouseY;
+  let visible = false;
 
+  // pointermove can fire far more often than the screen actually repaints
+  // (a high-polling-rate mouse easily clears 500-1000Hz), so this handler
+  // only ever records the latest position -- it used to also write the
+  // dot's transform straight from here, meaning every single hardware
+  // event forced a style write no matter how many piled up between
+  // frames. Now both the dot and the ring are written from the one rAF
+  // loop below, capping the real cost at the display's refresh rate.
   window.addEventListener('pointermove', (e) => {
     if (e.pointerType === 'touch') return;
     mouseX = e.clientX;
     mouseY = e.clientY;
-    dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
-    dot.style.opacity = '1';
-    ring.style.opacity = '1';
-  });
+    if (!visible) {
+      visible = true;
+      dot.style.opacity = '1';
+      ring.style.opacity = '1';
+    }
+  }, { passive: true });
 
   window.addEventListener('pointerleave', () => {
+    visible = false;
     dot.style.opacity = '0';
     ring.style.opacity = '0';
   });
@@ -362,6 +373,7 @@ function setupCustomCursor() {
   // especially on fast swipes. 0.55 still rounds off the motion slightly
   // but converges in 2-3 frames instead of 8-10.
   function loop() {
+    dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
     ringX += (mouseX - ringX) * 0.55;
     ringY += (mouseY - ringY) * 0.55;
     ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
@@ -381,18 +393,44 @@ function setupTilt() {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  // Each hovered card used to call getBoundingClientRect() and rewrite
+  // el.style.transition on every single mousemove -- a forced synchronous
+  // layout read plus a style write, both at raw native event frequency,
+  // right as the person is moving the mouse across the page. That's the
+  // classic layout-thrashing pattern and the main reason hover interactions
+  // could feel laggy instead of responsive. Fixed by measuring the rect
+  // once per hover (mouseenter, not mousemove) and batching the actual
+  // transform write to one per animation frame via a pending flag.
   const els = document.querySelectorAll('.project-card, .skill-block, .feature-card, .gallery-card');
   els.forEach((el) => {
-    el.addEventListener('mousemove', (e) => {
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 5;
-      const rotateX = -((y - rect.height / 2) / (rect.height / 2)) * 5;
-      el.style.transition = 'transform 0.1s ease';
+    let rect = null;
+    let pending = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function apply() {
+      pending = false;
+      if (!rect) return;
+      const rotateY = ((lastX - rect.width / 2) / (rect.width / 2)) * 5;
+      const rotateX = -((lastY - rect.height / 2) / (rect.height / 2)) * 5;
       el.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px) scale(1.015)`;
+    }
+
+    el.addEventListener('mouseenter', () => {
+      rect = el.getBoundingClientRect();
+      el.style.transition = 'transform 0.1s ease';
     });
+    el.addEventListener('mousemove', (e) => {
+      if (!rect) return;
+      lastX = e.clientX - rect.left;
+      lastY = e.clientY - rect.top;
+      if (!pending) {
+        pending = true;
+        requestAnimationFrame(apply);
+      }
+    }, { passive: true });
     el.addEventListener('mouseleave', () => {
+      rect = null;
       el.style.transition = 'transform 0.5s ease';
       el.style.transform = '';
     });
@@ -404,15 +442,36 @@ function setupMagneticButtons() {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  // Same layout-thrashing fix as setupTilt() above: rect measured once on
+  // mouseenter instead of every mousemove, transform write batched to one
+  // per animation frame instead of one per raw hardware event.
   document.querySelectorAll('.btn').forEach((el) => {
-    el.addEventListener('mousemove', (e) => {
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
+    let rect = null;
+    let pending = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function apply() {
+      pending = false;
+      if (!rect) return;
+      el.style.transform = `translate(${lastX * 0.25}px, ${lastY * 0.35 - 2}px)`;
+    }
+
+    el.addEventListener('mouseenter', () => {
+      rect = el.getBoundingClientRect();
       el.style.transition = 'transform 0.1s ease';
-      el.style.transform = `translate(${x * 0.25}px, ${y * 0.35 - 2}px)`;
     });
+    el.addEventListener('mousemove', (e) => {
+      if (!rect) return;
+      lastX = e.clientX - rect.left - rect.width / 2;
+      lastY = e.clientY - rect.top - rect.height / 2;
+      if (!pending) {
+        pending = true;
+        requestAnimationFrame(apply);
+      }
+    }, { passive: true });
     el.addEventListener('mouseleave', () => {
+      rect = null;
       el.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
       el.style.transform = '';
     });
@@ -1458,16 +1517,35 @@ function setupCursorGlow() {
   const glow = document.querySelector('.cursor-glow');
   if (!glow) return;
   let active = false;
+  let pending = false;
+  let x = 0;
+  let y = 0;
+
+  // Batched to one transform write per animation frame instead of one per
+  // raw pointermove event, same fix as the custom cursor and card tilt --
+  // see the comments there for why that matters for input responsiveness.
+  function apply() {
+    pending = false;
+    glow.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+  }
 
   window.addEventListener('pointermove', (e) => {
     if (e.pointerType === 'touch') return;
-    glow.style.opacity = '1';
-    glow.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
-    active = true;
-  });
+    x = e.clientX;
+    y = e.clientY;
+    if (!active) {
+      active = true;
+      glow.style.opacity = '1';
+    }
+    if (!pending) {
+      pending = true;
+      requestAnimationFrame(apply);
+    }
+  }, { passive: true });
 
   window.addEventListener('pointerleave', () => {
     if (active) glow.style.opacity = '0';
+    active = false;
   });
 }
 

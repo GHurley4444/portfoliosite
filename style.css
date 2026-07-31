@@ -247,6 +247,10 @@ body.custom-cursor-active button {
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s ease;
+  /* These two get a transform write every animation frame the cursor is
+     visible, so promote them to their own compositor layer up front
+     rather than making the browser guess mid-movement. */
+  will-change: transform;
 }
 
 .custom-cursor-dot {
@@ -279,6 +283,7 @@ body.custom-cursor-active button {
   transform: translate(-50%, -50%);
   transition: opacity 0.3s ease;
   opacity: 0;
+  will-change: transform;
 }
 
 /* ===================== Arcade intro (replaces the old boot log) ===================== */
