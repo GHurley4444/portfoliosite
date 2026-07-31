@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NCAE Cyber Games // Garrett Hurley</title>
-<meta name="description" content="NCAE-C Cyber Games — competing to identify vulnerabilities and solve live cybersecurity challenges under competition conditions.">
+<meta name="description" content="NCAE Cyber Games: a live Blue Team defense competition against a dedicated Red Team, including recovering locked-out VMs under active attack.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
     <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
     <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // NCAE CYBER GAMES</p>
     <h1 class="page-title" data-scramble-load>NCAE Cyber Games</h1>
-    <p class="page-desc">Competing in the National Centers of Academic Excellence in Cybersecurity (NCAE-C) Cyber Games — identifying vulnerabilities and solving live challenges under competition conditions.</p>
+    <p class="page-desc">An NSA-funded, entry-level collegiate competition run through the National Centers of Academic Excellence in Cybersecurity (NCAE-C) program (teams defend a live network against a dedicated professional Red Team in real time, while also working a CTF track and a mock incident report).</p>
   </section>
 
   <section class="section">
@@ -52,9 +52,9 @@
 
       <div class="case-section accent-blue reveal">
         <h2>The Competition</h2>
-        <p>The NCAE-C Cyber Games (Spring 2025) put teams up against a live set of cybersecurity challenges, working under competition conditions to find vulnerabilities, work through problems, and coordinate as a team against the clock.</p>
+        <p>NCAE Cyber Games isn't a straight jeopardy-style CTF. Most of the score comes from live Blue Team defense: each team is handed a small fleet of VMs (services like DNS, web, file shares, and a database, running across a mix of Windows and Linux) and has to keep them online and legitimate while a dedicated Red Team of professionals attacks continuously for the length of the event, trying to knock services down, plant persistence, and lock teams out of their own machines. On top of that, teams work a separate CTF challenge set for additional points, and write up an "Inject" (a short business-style incident report) partway through, so the event tests communication under pressure as much as it tests the technical response.</p>
         <div class="case-todo">
-          <strong>TODO — fill in:</strong> the exact format (jeopardy-style CTF with point categories, or attack-defense?), team name/size and your role on it, and how the team placed or scored.
+          <strong>TODO (confirm and fill in):</strong> the specific regional (which NCAE Cyber Games regional we competed in and when), our team name/size and my role on it, and how the team placed or scored.
         </div>
       </div>
 
@@ -63,43 +63,45 @@
         <div class="feature-grid">
           <div class="feature-card accent-violet">
             <span class="feature-icon">&#9673;</span>
-            <h3>Vulnerability Identification</h3>
-            <p>Worked through live systems and challenge sets to find the flaw each one was built around, under real time pressure.</p>
+            <h3>Live System Recovery</h3>
+            <p>Diagnosed and recovered VMs the Red Team had actively locked us out of, without the luxury of taking the box offline first (it still had to be serving traffic).</p>
           </div>
           <div class="feature-card accent-cyan">
             <span class="feature-icon">&#9678;</span>
-            <h3>Problem Solving</h3>
-            <p>Broke down unfamiliar challenges into testable pieces rather than guessing — the same instinct that carries over into real incident response.</p>
+            <h3>Problem Solving Under Pressure</h3>
+            <p>Worked through unfamiliar lockouts and challenge sets in real time, with the Red Team actively working against whatever fix I'd just put in.</p>
           </div>
           <div class="feature-card accent-amber">
             <span class="feature-icon">&#9679;</span>
             <h3>Team Coordination</h3>
-            <p>Split challenges across the team by strength and kept everyone moving instead of stacking up on the same problem.</p>
+            <p>Split recovery work and CTF challenges across the team by strength, so a lockout on one host didn't stall everyone else's progress.</p>
           </div>
-        </div>
-        <div class="case-todo">
-          <strong>TODO — replace with the real challenge categories</strong> you actually worked (e.g. web exploitation, forensics, cryptography, network analysis, reverse engineering) once confirmed — the cards above are placeholders built from the general skills on your resume, not specific categories.
         </div>
       </div>
 
       <div class="case-section accent-amber reveal">
-        <h2>Standout Challenge</h2>
-        <p>The single best challenge to write up in detail — the one that best shows how you actually think through a problem, not just that you solved it.</p>
+        <h2>Standout Challenge: Recovering Locked-Out VMs</h2>
+        <p>The moment that best represents the event for me: at multiple points during the competition, we lost administrative access to several of our own VMs mid-defense (exactly the outcome the Red Team was going for, since a box you can't log into is a box you can't defend). Rather than treat each lockout as a rebuild-from-scratch situation, which would have cost us time we didn't have, I worked through several different recovery strategies to get back in without wiping and starting over.</p>
+        <p>The one that mattered most was going in through the boot menu: interrupting the normal boot process to reach recovery options that don't depend on already having a working login (booting into a Windows recovery/advanced-options environment on the Windows boxes, or into single-user/rescue mode via the boot loader on the Linux boxes), then using that access to reset credentials, undo whatever the Red Team had changed to keep us out, and hand the machine back to the rest of the team. It's a technique I'd mostly used for legitimate lost-password recovery before this, and using it live, on a real clock, against someone actively fighting to keep the door shut, is what made it click as a genuinely useful tool rather than just a fallback.</p>
         <div class="case-todo">
-          <strong>TODO — write up one specific challenge:</strong> what category it was in, what the problem looked like at first, the approach that cracked it, and the tool or technique that ended up mattering most. A screenshot of the tool output or your notes would work well here.
+          <strong>TODO (add specifics if I want to expand this):</strong> which host(s) this happened on (Windows vs. Linux, what service they ran), roughly how many times it happened over the event, and whether a screenshot or note from the day exists to pair with this write-up.
         </div>
       </div>
 
       <div class="case-section accent-cyan reveal">
         <h2>Tech Stack</h2>
-        <p class="page-desc" style="margin: 0 0 1rem; text-align: left; max-width: 780px;">Starter guess based on your general toolkit — confirm and edit to match what you actually reached for during the competition.</p>
+        <p class="page-desc" style="margin: 0 0 1rem; text-align: left; max-width: 780px;">General tools the competition's defense/CTF scope calls for (confirm and edit to match what I actually reached for during the event).</p>
         <div class="tech-tags">
-          <span>Kali Linux</span>
+          <span>Windows Server</span>
+          <span>Windows Recovery Environment</span>
+          <span>Linux</span>
+          <span>GRUB / Rescue Mode</span>
+          <span>Active Directory</span>
+          <span>DNS</span>
+          <span>SMB</span>
           <span>Nmap</span>
           <span>Wireshark</span>
-          <span>Burp Suite</span>
-          <span>John the Ripper</span>
-          <span>Netcat</span>
+          <span>Incident Reporting</span>
         </div>
         <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
           <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
