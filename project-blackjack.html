@@ -159,7 +159,6 @@
       <div class="case-section accent-amber reveal">
         <h2>From Terminal to Browser</h2>
         <p>The original is a single self-contained round, run once from the command line &mdash; it was written to prove the rules logic, not to track a bankroll, so it used placeholder payout text instead of real numbers. The browser demo above loops rounds, reshuffles a fresh deck on every deal, and replaces that placeholder text with a real chip balance and real payout math, while keeping the exact same card values, soft-Ace counting, insurance/peek, split, and dealer-stands-on-17 behavior as <code>main.py</code>.</p>
-        <p>Two earlier bugs in the original terminal script got fixed here rather than kept: the dealer's hole card used to leak into the console output the moment it was dealt (before the player even acted), and a player bust used to still let the dealer draw its hand all the way out &mdash; occasionally turning a lost hand into a push if the dealer happened to bust too. Both are fixed in <code>main.py</code> itself now: the hole card stays hidden until the peek or the dealer's own turn reveals it, and a bust is an immediate, unconditional loss.</p>
       </div>
 
       <div class="case-section accent-blue reveal">

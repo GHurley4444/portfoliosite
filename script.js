@@ -2468,6 +2468,7 @@ function setupBlackjackDemo() {
 
     round.phase = 'player';
     round.activeIndex = 0;
+    playControls.classList.remove('hidden');
     renderRound();
     statusEl.textContent = `${prefix}HIT OR STAND?`;
     updateActionButtons();
