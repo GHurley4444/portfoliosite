@@ -1350,17 +1350,37 @@ function setupSecretGame() {
   document.body.appendChild(hud);
 
   let active = false;
+  let idleTimer = null;
+
+  // The "PRESS ANY BUTTON TO START" prompt used to just sit there
+  // blinking indefinitely if someone triggered it and then wandered off
+  // to read the page instead of playing -- no way for it to resolve
+  // itself short of a manual Escape press, which isn't obvious for an
+  // easter egg most people stumble into once. Auto-cancelling it after
+  // a stretch of no input (same cleanup path as pressing Escape) means
+  // it always settles back down on its own instead of nagging forever.
+  const IDLE_TIMEOUT_MS = 8000;
+
+  function clearIdleTimer() {
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  }
 
   function renderHud(state) {
     if (state.state === 'prompt') {
       hud.innerHTML = '<div class="game-hud-prompt">PRESS ANY BUTTON TO START</div>'
         + '<div class="game-hud-hint">WASD TO MOVE &middot; ESC TO EXIT</div>';
       hud.classList.add('visible');
+      clearIdleTimer();
+      idleTimer = setTimeout(() => {
+        if (gridEngine.mode === 'prompt') exitGame();
+      }, IDLE_TIMEOUT_MS);
     } else if (state.state === 'countdown') {
+      clearIdleTimer();
       hud.innerHTML = `<div class="game-hud-countdown">${state.value}</div>`;
     } else if (state.state === 'playing') {
       hud.innerHTML = '<div class="game-hud-hint">WASD TO MOVE &middot; ESC TO EXIT</div>';
     } else if (state.state === 'gameover') {
+      clearIdleTimer();
       const msg = state.result === 'won' ? 'YOU SURVIVED' : 'DERESOLVED';
       hud.innerHTML = `<div class="game-hud-result">${msg}</div>`;
       setTimeout(() => {
@@ -1374,6 +1394,7 @@ function setupSecretGame() {
   }
 
   function exitGame() {
+    clearIdleTimer();
     active = false;
     document.body.classList.remove('game-active');
     if (bgToggleBtn) bgToggleBtn.disabled = false;

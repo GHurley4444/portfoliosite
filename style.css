@@ -976,6 +976,12 @@ body.custom-cursor-active button {
 
 .game-hud.visible { opacity: 1; }
 
+/* Belt-and-suspenders alongside the JS-side idle timeout: same lesson as
+   .arcade-screen-label above (see that comment) applied here too, so the
+   blink keyframe on .game-hud-prompt can never be caught still running
+   underneath a hidden .game-hud during the 0.3s opacity transition. */
+.game-hud:not(.visible) .game-hud-prompt { animation: none; }
+
 .game-hud-prompt {
   font-size: 0.85rem;
   letter-spacing: 0.12em;
