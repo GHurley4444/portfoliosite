@@ -323,11 +323,17 @@ function setupScrambleOnLoad() {
 }
 
 // ===================== Custom cursor =====================
-// Skipped on touch devices — there's no pointer to reticle-ify.
+// Skipped on touch devices — there's no pointer to reticle-ify. Returns
+// a { disable, enable } handle so setupPerfWatchdog() (below) can fall
+// back to the plain OS cursor if the machine turns out to be too busy
+// elsewhere to keep this one smooth -- see that function's comment for
+// why a JS-driven cursor specifically (as opposed to everything else on
+// the page) is the one thing system load makes visible as "laggy mouse."
 function setupCustomCursor() {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return null;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
 
+  let enabled = true;
   document.body.classList.add('custom-cursor-active');
 
   const dot = document.createElement('div');
@@ -353,7 +359,7 @@ function setupCustomCursor() {
     if (e.pointerType === 'touch') return;
     mouseX = e.clientX;
     mouseY = e.clientY;
-    if (!visible) {
+    if (enabled && !visible) {
       visible = true;
       dot.style.opacity = '1';
       ring.style.opacity = '1';
@@ -373,10 +379,12 @@ function setupCustomCursor() {
   // especially on fast swipes. 0.55 still rounds off the motion slightly
   // but converges in 2-3 frames instead of 8-10.
   function loop() {
-    dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
-    ringX += (mouseX - ringX) * 0.55;
-    ringY += (mouseY - ringY) * 0.55;
-    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    if (enabled) {
+      dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+      ringX += (mouseX - ringX) * 0.55;
+      ringY += (mouseY - ringY) * 0.55;
+      ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    }
     requestAnimationFrame(loop);
   }
   loop();
@@ -386,6 +394,68 @@ function setupCustomCursor() {
     el.addEventListener('mouseenter', () => ring.classList.add('cursor-hover'));
     el.addEventListener('mouseleave', () => ring.classList.remove('cursor-hover'));
   });
+
+  return {
+    disable() {
+      if (!enabled) return;
+      enabled = false;
+      visible = false;
+      document.body.classList.remove('custom-cursor-active'); // restores the real OS cursor
+      dot.style.opacity = '0';
+      ring.style.opacity = '0';
+    },
+    enable() {
+      if (enabled) return;
+      enabled = true;
+      document.body.classList.add('custom-cursor-active');
+      // opacity comes back on its own from the next pointermove.
+    },
+  };
+}
+
+// ===================== Adaptive performance watchdog =====================
+// The custom cursor above is only ever as smooth as this page's own frame
+// rate, unlike the real OS cursor, which is composited independently of
+// the page and never lags no matter what else the machine is doing. That
+// trade is invisible when the machine has room to spare, but if the
+// system as a whole is under heavy load (another app hogging the CPU,
+// thermal throttling, too many tabs, whatever), this page's frame rate
+// drops along with everything else, and a JS-driven cursor makes that
+// drop visible in the one place people notice lag the most: their own
+// pointer. This watchdog measures real rAF frame timing and automatically
+// falls back to the plain OS cursor while frames are running slow, then
+// switches the custom one back on once things recover -- so a loaded
+// system degrades this page gracefully instead of feeling actively broken.
+function setupPerfWatchdog(onDegrade, onRestore) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const DEGRADE_MS = 42;    // ~24fps sustained -- worth reacting to
+  const RESTORE_MS = 20;    // ~50fps -- has to clearly recover, not just touch 24fps, before re-enabling
+  const SAMPLE_WINDOW = 30; // frames averaged before acting, so one stray stutter can't flip it
+
+  let degraded = false;
+  let last = performance.now();
+  const samples = [];
+
+  function frame(now) {
+    const delta = now - last;
+    last = now;
+    samples.push(delta);
+    if (samples.length > SAMPLE_WINDOW) samples.shift();
+
+    if (samples.length === SAMPLE_WINDOW) {
+      const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+      if (!degraded && avg > DEGRADE_MS) {
+        degraded = true;
+        onDegrade();
+      } else if (degraded && avg < RESTORE_MS) {
+        degraded = false;
+        onRestore();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 // ===================== 3D tilt on cards =====================
@@ -2646,7 +2716,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupScrollSpy();
   setupReveal();
   setupCursorGlow();
-  setupCustomCursor();
+  const cursorCtl = setupCustomCursor();
+  if (cursorCtl) setupPerfWatchdog(cursorCtl.disable, cursorCtl.enable);
   setupTilt();
   setupMagneticButtons();
   setupMobileNav();
