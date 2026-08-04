@@ -1684,6 +1684,11 @@ function animateCount(el, target, duration = 900) {
   requestAnimationFrame(tick);
 }
 
+function setupGithubChartFallback() {
+  const chart = document.querySelector('.github-chart');
+  if (chart) chart.addEventListener('error', () => { chart.style.display = 'none'; });
+}
+
 async function setupGithubStats() {
   const GITHUB_USER = 'GHurley4444';
   const reposEl = document.getElementById('ghRepos');
@@ -2722,6 +2727,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMagneticButtons();
   setupMobileNav();
   setupPlaceholderLinks();
+  setupGithubChartFallback();
   setupGithubStats();
   setupEmailReveal();
   setActiveNavByPage();

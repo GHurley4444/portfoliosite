@@ -1157,6 +1157,8 @@ body.custom-cursor-active button {
   flex-wrap: wrap;
 }
 
+.hero-actions--start { justify-content: flex-start; margin-top: 1.5rem; }
+
 .btn {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -2317,6 +2319,8 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
   margin: 0 auto;
 }
 
+.page-desc--tight { margin: 0 0 1rem; text-align: left; max-width: 780px; }
+
 /* ===================== Project gallery ===================== */
 .gallery-grid {
   display: grid;
@@ -2371,6 +2375,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
   color: var(--accent-soft, var(--cyan-soft));
 }
 .gallery-card:hover .gallery-card-cta { text-decoration: underline; }
+.gallery-card--soon { opacity: 0.55; cursor: default; }
 
 /* ===================== Case study layout ===================== */
 .case-section { margin-bottom: 3.5rem; }

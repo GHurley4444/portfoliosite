@@ -9,25 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script>
-// Runs synchronously in <head>, before the body (and the intro overlay
-// inside it) is ever painted. Without this, the overlay markup below
-// -- opaque, full-viewport, no default display:none -- gets rendered
-// as soon as the browser parses it, then sits there until script.js
-// (loaded at the end of body) finally runs and removes it on repeat
-// visits. That gap between paint and removal is a real flash, not a
-// perceived one, every time this page loads after the first: browsing
-// project -> index#about, refreshing, opening a new tab, etc. Setting
-// .no-intro on <html> here, before the overlay div even exists in the
-// DOM, lets a plain CSS rule keep it hidden from its very first frame.
-(function () {
-  try {
-    var seen = sessionStorage.getItem('gh_intro_seen');
-    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (seen || reduced) document.documentElement.classList.add('no-intro');
-  } catch (e) {}
-})();
-</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://ghchart.rshah.org; connect-src 'self' https://api.github.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+<script src="intro-init.js"></script>
 </head>
 <body>
 
@@ -269,7 +252,7 @@
           <div class="stat-block accent-cyan"><span class="stat-label">FOLLOWERS</span><span class="stat-value" id="ghFollowers">&mdash;</span></div>
           <div class="stat-block accent-violet"><span class="stat-label">LAST UPDATED REPO</span><span class="stat-value" id="ghLastRepo">&mdash;</span></div>
         </div>
-        <img class="github-chart" src="https://ghchart.rshah.org/37f4ff/GHurley4444" alt="Garrett Hurley's GitHub contribution chart" loading="lazy" onerror="this.style.display='none';">
+        <img class="github-chart" src="https://ghchart.rshah.org/37f4ff/GHurley4444" alt="Garrett Hurley's GitHub contribution chart" loading="lazy">
       </div>
     </div>
   </section>
