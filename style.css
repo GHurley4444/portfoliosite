@@ -2131,6 +2131,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
 
 .more-projects.has-3 { grid-template-columns: repeat(3, 1fr); }
 .more-projects.has-4 { grid-template-columns: repeat(4, 1fr); }
+.more-projects.has-5 { grid-template-columns: repeat(3, 1fr); }
 
 .ghost-card-live {
   border-style: solid;
@@ -2618,6 +2619,7 @@ a.project-card:hover::after { width: 22px; height: 22px; opacity: 1; }
   .more-projects { grid-template-columns: 1fr; }
   .more-projects.has-3 { grid-template-columns: 1fr; }
   .more-projects.has-4 { grid-template-columns: 1fr; }
+  .more-projects.has-5 { grid-template-columns: 1fr; }
   .case-grid { grid-template-columns: 1fr; }
 }
 

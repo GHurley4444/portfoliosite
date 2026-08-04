@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Security Audit // Garrett Hurley</title>
+<meta name="description" content="Site Security Audit — a Playwright-based security test suite that audits this portfolio site for headers, exposed files, clickjacking, XSS, and mixed content.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo"><span class="logo-bracket" aria-hidden="true">[</span>GH<span class="logo-dot">_</span>SYS<span class="logo-bracket" aria-hidden="true">]</span></a>
+    <nav class="main-nav">
+      <a href="index.html#about" data-nav="about">ABOUT</a>
+      <a href="projects.html" data-nav="projects">PROJECTS</a>
+      <a href="index.html#skills" data-nav="skills">SKILLS</a>
+      <a href="index.html#contact" data-nav="contact">CONTACT</a>
+    </nav>
+    <div class="header-actions">
+      <button class="bg-toggle" id="bgToggle" type="button" aria-pressed="true" aria-label="Toggle Tron background">
+        <span class="bg-toggle-dot"></span>TRON
+      </button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-banner">
+    <div class="grid-floor banner-grid-floor" aria-hidden="true"></div>
+    <p class="breadcrumb"><a href="index.html">HOME</a> // <a href="projects.html">PROJECTS</a> // SECURITY AUDIT</p>
+    <h1 class="page-title">Site Security Audit</h1>
+    <p class="page-desc">A Playwright-based security test suite that treats the browser like an attacker would — checking headers, hunting for exposed files, fuzzing for XSS, and attempting clickjacking against this very portfolio site.</p>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+
+      <a href="projects.html" class="back-link">&larr; ALL PROJECTS</a>
+
+      <div class="case-section accent-amber reveal">
+        <h2>Concept</h2>
+        <p>Most of the security tooling built for coursework and CTFs runs once and gets thrown away. This one is meant to keep running: it's a small, repeatable Playwright suite pointed at this portfolio site by default, so every deploy gets checked the same way a real audit would — automatically, not by memory.</p>
+        <p>It defaults to serving only the <strong>git-tracked files</strong> from this repo through a local static server, which mirrors what GitHub Pages actually publishes (no <code>.git</code> internals, no local-only files) rather than testing the raw working directory. A <code>BASE_URL</code> environment variable can point it at any other target the operator owns or is explicitly authorized to test.</p>
+      </div>
+
+      <div class="case-section accent-cyan reveal">
+        <h2>What It Checks</h2>
+
+        <div class="feature-grid">
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9673;</span>
+            <h3>Security Headers</h3>
+            <p>CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and HSTS on HTTPS origins — audited as soft assertions so one run reports every gap instead of stopping at the first miss.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9678;</span>
+            <h3>Exposed Sensitive Files</h3>
+            <p>Hard-asserted checks against <code>.git/config</code>, <code>.env</code>, <code>.htpasswd</code>, backup archives, and a dozen other common misconfiguration paths — a real 200 response here is a finding, not a style nit.</p>
+          </div>
+          <div class="feature-card accent-amber">
+            <span class="feature-icon">&#9635;</span>
+            <h3>Cookies &amp; Storage</h3>
+            <p>Any cookie the site sets gets checked for <code>Secure</code>/<code>HttpOnly</code>/<code>SameSite</code>; local and session storage get scanned for suspicious key names like <code>token</code> or <code>password</code>.</p>
+          </div>
+          <div class="feature-card accent-blue">
+            <span class="feature-icon">&#9889;</span>
+            <h3>Functional Clickjacking Check</h3>
+            <p>Rather than just reading the X-Frame-Options header, it actually embeds the live page in a foreign-origin iframe over CDP and confirms the browser refuses to render it.</p>
+          </div>
+          <div class="feature-card accent-cyan">
+            <span class="feature-icon">&#9679;</span>
+            <h3>Reflected &amp; DOM XSS Fuzzing</h3>
+            <p>Fuzzes common query-parameter names with an XSS payload and checks both the raw HTTP response and the rendered DOM, listening for any dialog the payload might trigger.</p>
+          </div>
+          <div class="feature-card accent-violet">
+            <span class="feature-icon">&#9678;</span>
+            <h3>Mixed Content</h3>
+            <p>On an HTTPS deployment, confirms every subresource is also HTTPS and flags any third-party origin the site talks to that isn't already on an allow-list.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-section accent-violet reveal">
+        <h2>A Real Finding, Not a Green Checkmark</h2>
+        <p>Running the suite against this site's actual deploy target turns up <strong>22 passes and 2 documented failures</strong> — GitHub Pages doesn't allow setting custom response headers, so the CSP and clickjacking checks correctly flag that gap every run. That's the intended behavior: an audit tool that always shows green isn't checking anything real. If this site ever moves to a host that supports response headers (Netlify, Cloudflare Pages, Vercel), the fix is a <code>_headers</code> file — documented directly in the suite's README.</p>
+      </div>
+
+      <div class="case-section accent-blue reveal">
+        <h2>Tech Stack</h2>
+        <div class="tech-tags">
+          <span>Playwright</span>
+          <span>Node.js</span>
+          <span>JavaScript</span>
+          <span>HTTP Security Headers</span>
+          <span>XSS / Clickjacking Testing</span>
+          <span>CI-Ready Test Design</span>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start; margin-top: 1.5rem;">
+          <a href="https://github.com/GHurley4444/site-security-audit" target="_blank" rel="noopener" class="btn btn-primary">VIEW REPO</a>
+          <a href="projects.html" class="btn btn-ghost">BACK TO PROJECTS</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> Garrett Hurley &middot; Built with a bit of Tron energy. <button class="secret-trigger" id="secretTrigger" type="button" aria-label="Play the light-cycle game"><span class="secret-trigger-dot"></span>PLAY THE GRID</button></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
